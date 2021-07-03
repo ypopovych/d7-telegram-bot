@@ -85,15 +85,18 @@ export class NukeModule extends Module<NukeModuleConfig> {
 
     // Helpers
     private getBombSize() {
-        const sizes = [
-            10, 20, 50, 100, 150, 280, 350,
-            600, 800, 1000, 2000, 5000, 8000,
-            100000
-        ]
-        let bomb_size = this.getRandomIntInclusive(0, sizes.length-1)
-        bomb_size = Math.round(this.getRandomIntInclusive(sizes[bomb_size]-sizes[bomb_size]*0.02, sizes[bomb_size]+sizes[bomb_size]*0.02))
-        return Math.min(bomb_size, 100000)
+        return this.getRandomIntInclusive(1, 100000)
     }
+    // private getBombSize() {
+    //     const sizes = [
+    //         10, 20, 50, 100, 150, 280, 350,
+    //         600, 800, 1000, 2000, 5000, 8000,
+    //         100000
+    //     ]
+    //     let bomb_size = this.getRandomIntInclusive(0, sizes.length-1)
+    //     bomb_size = Math.round(this.getRandomIntInclusive(sizes[bomb_size]-sizes[bomb_size]*0.02, sizes[bomb_size]+sizes[bomb_size]*0.02))
+    //     return Math.min(bomb_size, 100000)
+    // }
     
     private getRandomIntInclusive(min: number, max: number) {
         min = Math.ceil(min)
