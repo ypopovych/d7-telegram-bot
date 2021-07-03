@@ -2,6 +2,7 @@
 Telegram Administrator bot for D7 chats
 
 # How to build and run
+
 ## Install dependencies
 ```sh
 npm install
@@ -21,3 +22,6 @@ For performance reasons it's better to compile TypeScript and run JS:
 ```sh
 npm run build && npm start
 ```
+
+# Licence
+Bot can be used, distributed and modified under [the Apache 2.0 license](LICENSE).
