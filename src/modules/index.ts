@@ -1,5 +1,5 @@
 import { Telegraf } from "telegraf"
-import { Context, Storage, MatchedContext } from "../types"
+import { Context, Storage, MatchedContext, MethodConfig } from "../types"
 import { ModuleFactory } from "../module"
 import { AdminModule } from "./admin"
 import { AutoRoModule } from "./auto_ro"
@@ -11,6 +11,13 @@ import { RoModule } from "./ro"
 const ALL_MODULES: ModuleFactory<any>[] = [
     AdminModule, AutoRoModule, BanModule, NukeModule, RoVotingModule, RoModule
 ]
+
+const DEFAULT_HELP_CONFIG: HelpMethodConfig = {
+    shortCall: true,
+    enabled: true
+}
+
+type HelpMethodConfig = MethodConfig & { enabled: boolean }
 
 type HelpModuleConfig = {
     title: string
@@ -33,21 +40,25 @@ async function command_help(commands: HelpModuleConfig[], ctx: MatchedContext<Co
 
 export function registerModulesIn(bot: Telegraf<Context>, storage: Storage, configs: Record<string, any>) {
     let helpInfo: HelpModuleConfig[] = []
+    let helpConfig: HelpMethodConfig = Object.assign({}, DEFAULT_HELP_CONFIG, configs["help"] ?? {})
     for (let mFact of ALL_MODULES) {
         const module = new mFact(storage, configs[mFact.moduleName] ?? {})
         module.register(bot)
-
-        helpInfo.push({
-            title: module.title(),
-            commands: module.commands()
-        })
+        if (helpConfig.enabled) {
+            helpInfo.push({
+                title: module.title(),
+                commands: module.commands()
+            })
+        }
     }
-    bot.help((ctx: MatchedContext<Context, 'text'>) => command_help(helpInfo, ctx))
+    if (helpConfig.enabled) {
+        bot.help((ctx: MatchedContext<Context, 'text'>) => command_help(helpInfo, ctx))
+    }
 }
 
 export function generateDefaultConfig(): Record<string, any> {
     return ALL_MODULES.reduce((cfg, mFact) => {
         cfg[mFact.moduleName] = mFact.defaultConfig
         return cfg
-    }, {} as Record<string, any>)
+    }, { help: DEFAULT_HELP_CONFIG } as Record<string, any>)
 }

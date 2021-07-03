@@ -125,11 +125,10 @@ export class AutoRoModule extends Module<AutoRoModuleConfig> {
         return current >= count
     }
 
-    private async newNonMediaMessage(ctx: MatchedContext<Context, 'message'>): Promise<void> {
-        return this.storage.setValues(
+    private newNonMediaMessage(ctx: MatchedContext<Context, 'message'>): Promise<void> {
+        return this.storage.removeValues(
             String(ctx.chat.id), this.moduleName(),
-            { [this.NUMBER_OF_MESSAGES_KEY]: '0', [this.MEDIA_GROUP_ID_KEY]: '' },
-            86400
+            [this.NUMBER_OF_MESSAGES_KEY, this.MEDIA_GROUP_ID_KEY]
         )
     }
 }
