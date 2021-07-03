@@ -1,7 +1,7 @@
 import { Telegraf } from "telegraf"
 import { Context, MatchedContext } from "../types"
 import { enableRo } from "../utils/ro"
-import { ensureChatAdmin, isMediaMessage } from "../utils/validators"
+import { ensureChatAdmin, isMediaMessage, isBotCommand } from "../utils/validators"
 
 const MODULE = "AUTO_RO"
 const SET_AUTO_RO_COMMAND="set_auto_ro_message_count"
@@ -36,7 +36,7 @@ function newNonMediaMessage(ctx: Context): Promise<void> {
 }
 
 async function command_setNumberOfMessages(ctx: MatchedContext<Context, 'text'>): Promise<void> {
-    if (ctx.message.text.indexOf(ctx.botInfo.username) <= 0) return
+    if (!isBotCommand(ctx)) return
     if (!await ensureChatAdmin(ctx, ctx.message.from)) return
 
     const index = ctx.message.text.indexOf(ctx.botInfo.username) + ctx.botInfo.username.length

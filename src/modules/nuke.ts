@@ -1,5 +1,6 @@
 import { Telegraf } from "telegraf"
 import { Context, MatchedContext } from "../types"
+import { isBotCommand } from "../utils/validators"
 
 type NCityInfo = { id: string, bText: string, lText: string, lat: string, lng: string}
 
@@ -31,8 +32,7 @@ function getBombSize() {
   }
 
 async function command_nukeList(ctx: MatchedContext<Context, 'text'>): Promise<void> {
-    const hasName = ctx.message.text.indexOf(ctx.botInfo.username) > 0
-    if (!hasName && ctx.chat.type !== "private") return
+    if (!isBotCommand(ctx)) return
 
     let lines = NUKE_LIST.reduce((lines, nuke) => {
         return lines.concat([`    /nuke_${nuke.id}@${ctx.botInfo.username} - ${nuke.lText}`])

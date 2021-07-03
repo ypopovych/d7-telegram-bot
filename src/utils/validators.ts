@@ -17,6 +17,13 @@ export function isMediaMessage(message: any): { isMedia: boolean, mediaGroupId: 
     return { isMedia, mediaGroupId: null }
 }
 
+export function isBotCommand(ctx: Context): boolean {
+    if (ctx.message?.chat?.type == "private") {
+        return true
+    }
+    return ctx.message && (ctx.message as any).text?.indexOf(ctx.message.from.username ?? "nouser")
+}
+
 export function isChatAdmin(ctx: Context, userId: number): Promise<boolean> {
     return ctx
         .getChatAdministrators()  

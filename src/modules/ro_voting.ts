@@ -1,6 +1,6 @@
 import { Telegraf } from "telegraf"
 import { Context, MatchedContext } from "../types"
-import { ensureChatAdmin, ensureMessageCitation } from "../utils/validators"
+import { ensureChatAdmin, ensureMessageCitation, isBotCommand } from "../utils/validators"
 import { getHoursString } from "../utils/string"
 import { enableRo } from "../utils/ro"
 
@@ -39,7 +39,7 @@ function removePoll(ctx: MatchedContext<Context, 'text' | 'poll'>, pollId: strin
 }
 
 async function command_setNumberOfVotes(ctx: MatchedContext<Context, 'text'>): Promise<void> {
-    if (ctx.message.text.indexOf(ctx.botInfo.username) <= 0) return
+    if (!isBotCommand(ctx)) return
     if (!await ensureChatAdmin(ctx, ctx.message.from)) return
 
     const index = ctx.message.text.indexOf(ctx.botInfo.username) + ctx.botInfo.username.length
@@ -63,6 +63,7 @@ async function command_setNumberOfVotes(ctx: MatchedContext<Context, 'text'>): P
 }
 
 async function command_startRo24hPoll(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    if (!isBotCommand(ctx)) return
     if (!await ensureMessageCitation(ctx)) return
     const numberOfVotes = await getNumberOfVotes(ctx)
     const name = ctx.message.reply_to_message!.from!.first_name
