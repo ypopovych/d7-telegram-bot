@@ -34,7 +34,19 @@ export function isChatAdmin(ctx: Context, userId: number): Promise<boolean> {
         )
 }
 
+export async function ensureGroupChat(ctx: Context): Promise<boolean> {
+    if (ctx.chat?.type.indexOf("group") ?? -1 < 0) {
+        await ctx.reply(
+            "Ця команда працює тільки у групових чатах",
+            { reply_to_message_id: ctx.message!.message_id }
+        )
+        return false
+    }
+    return true
+}
+
 export async function ensureChatAdmin(ctx: Context, user: User): Promise<boolean> {
+    if (!await ensureGroupChat(ctx)) return false
     if (!await isChatAdmin(ctx, user.id)) {
         await ctx.reply(
             "Не електрик - не лізь. У тебе немає прав для цього",

@@ -82,7 +82,6 @@ async function event_onMessage(ctx: MatchedContext<Context, 'message'>, next: ()
     await next()
 }
 
-
 export function register(bot: Telegraf<Context>) {
     bot.command(SET_AUTO_RO_COMMAND, command_setNumberOfMessages)
     bot.on('message', event_onMessage)
