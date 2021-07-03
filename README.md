@@ -9,7 +9,10 @@ npm install
 ```
 
 ## Create config
-Copy `config.example.json` into `config.json` and set `botToken` value.
+Run npm script and copy JSON to the `config.json` file
+```sh
+npm run dev-gen-config
+```
 
 ## Run
 Start dev version without compiling with `ts-node`:

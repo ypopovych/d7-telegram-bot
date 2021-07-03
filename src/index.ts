@@ -12,13 +12,11 @@ const config = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "config.jso
 // Creating bot instance
 const bot = new Telegraf<Context>(config.botToken)
 
-// Adding cache instance to the context
-bot.context.storage = new RedisStorage(redis.createClient(config.redis.url), config.redis.options)
-// Adding config to the context
-bot.context.simpleCommands = config.simpleCommands ?? []
+// Storage instance
+const storage = new RedisStorage(redis.createClient(config.redis.url), config.redis.options)
 
 // Registering bot modules
-modules.register(bot)
+modules.registerModulesIn(bot, storage, config.modules ?? {})
 
 // WebHook setup
 let options: Telegraf.LaunchOptions = {}

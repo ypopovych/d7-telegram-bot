@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node ./dist/index.js",
     "dev": "ts-node ./src/index.ts",
+    "gen-config": "node ./dist/gen_config.js",
+    "dev-gen-config": "ts-node ./src/gen_config.ts",
     "build": "rm -rf ./dist && tsc"
   },
   "keywords": [
@@ -19,6 +21,7 @@
     "redis": "^3.1.2",
     "redis-commands": "^1.7.0",
     "telegraf": "^4.4.0",
+    "ts-deepmerge": "^1.0.8",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
