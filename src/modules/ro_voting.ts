@@ -80,7 +80,7 @@ export class RoVotingModule extends Module<RoVotingModuleConfig> {
             userId: ctx.message.reply_to_message!.from!.id,
             endDate: Date.now() + this.config.ro_24h_poll.pollTime,
             period: 86400,
-            chatId: ctx.chat.id,
+            chatId: poll.chat.id,
             id: poll.poll.id,
             messageId: poll.message_id,
             votesCount: numberOfVotes
