@@ -1,5 +1,5 @@
-import { Context } from "telegraf"
 import { ChatMemberRestricted } from "typegram"
+import { Context } from "../types"
 import { isChatAdmin } from './validators'
 import { getHoursString } from './string'
 

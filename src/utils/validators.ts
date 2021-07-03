@@ -1,11 +1,8 @@
-import { ChatMember, User } from "typegram"
-import { Context } from "telegraf"
+import { User } from "typegram"
+import { Context } from "../types"
+import { getSuperAdmins } from "./superadmin"
 
 const BOT_USERNAME_REGEX = new RegExp(/\/([a-zA-Z_\-\.]+)(@\S+)?/)
-
-export function isAdmin(user: ChatMember) {
-    return user.status === "creator"
-}
 
 export function isMediaMessage(message: any): { isMedia: boolean, mediaGroupId: string | null } {
     if (message.hasOwnProperty('media_group_id')) {
@@ -26,16 +23,17 @@ export function isBotCommand(ctx: Context): boolean {
     return !!match && match[2] == '@' + ctx.botInfo.username
 }
 
-export function isChatAdmin(ctx: Context, userId: number): Promise<boolean> {
-    return ctx
-        .getChatAdministrators()  
-        .then(admins =>
-            !!admins.find(admin => isAdmin(admin) && admin.user.id === userId)
-        )
+export function isGroupChat(ctx: Context): boolean {
+    return (ctx.chat?.type.indexOf("group") ?? -1) >= 0
+}
+
+export async function isChatAdmin(ctx: Context, userId: number): Promise<boolean> {
+    const superadmins = await getSuperAdmins(ctx)
+    return superadmins.indexOf(userId) >= 0
 }
 
 export async function ensureGroupChat(ctx: Context): Promise<boolean> {
-    if (ctx.chat?.type.indexOf("group") ?? -1 < 0) {
+    if (!isGroupChat(ctx)) {
         await ctx.reply(
             "Ця команда працює тільки у групових чатах",
             { reply_to_message_id: ctx.message!.message_id }
