@@ -1,6 +1,8 @@
 import { ChatMember, User } from "typegram"
 import { Context } from "telegraf"
 
+const BOT_USERNAME_REGEX = new RegExp(/\/([a-zA-Z_\-\.]+)(@\S+)?/)
+
 export function isAdmin(user: ChatMember) {
     return user.status === "creator"
 }
@@ -18,10 +20,10 @@ export function isMediaMessage(message: any): { isMedia: boolean, mediaGroupId: 
 }
 
 export function isBotCommand(ctx: Context): boolean {
-    if (ctx.message?.chat?.type == "private") {
-        return true
-    }
-    return ctx.message && (ctx.message as any).text?.indexOf(ctx.message.from.username ?? "nouser")
+    if (ctx.message?.chat?.type == "private") return true
+    if (!ctx.message && !(ctx.message as any).text) return false
+    const match = BOT_USERNAME_REGEX.exec((ctx.message as any).text)
+    return !!match && match[2] == '@' + ctx.botInfo.username
 }
 
 export function isChatAdmin(ctx: Context, userId: number): Promise<boolean> {

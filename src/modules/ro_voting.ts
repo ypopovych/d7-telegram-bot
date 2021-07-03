@@ -85,9 +85,9 @@ async function command_startRo24hPoll(ctx: MatchedContext<Context, 'text'>): Pro
     await addPoll(ctx, poll.poll.id, pollData, 86400)
 }
 
-async function event_onPoll(ctx: MatchedContext<Context, 'poll'>): Promise<void> {
+async function event_onPoll(ctx: MatchedContext<Context, 'poll'>, next: () => Promise<void>): Promise<void> {
     const pollData = await getPoll(ctx, ctx.poll.id)
-    if (!pollData) return
+    if (!pollData) return await next()
     if (ctx.poll.is_closed) {
         return await removePoll(ctx, ctx.poll.id)
     }

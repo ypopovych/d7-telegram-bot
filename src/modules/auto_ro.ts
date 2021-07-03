@@ -63,22 +63,23 @@ async function command_setNumberOfMessages(ctx: MatchedContext<Context, 'text'>)
     )
 }
 
-async function event_onMessage(ctx: MatchedContext<Context, 'message'>): Promise<void> {
+async function event_onMessage(ctx: MatchedContext<Context, 'message'>, next: () => Promise<void>): Promise<void> {
     const count = await getNumberOfMessages(ctx)
-    if (count <= 0) return // disabled for this chat
-
-    const { isMedia, mediaGroupId } = isMediaMessage(ctx.message)
-    if (isMedia) {
-        if (await newMediaMessage(ctx, mediaGroupId ?? '', count)) {
-            await enableRo(
-                ctx, ctx.message.from.id, 86400,
-                ctx.message.message_id, ctx.message.from.first_name,
-                `за ${count} або більше медіа підряд`
-            )
+    if (count > 0) {
+        const { isMedia, mediaGroupId } = isMediaMessage(ctx.message)
+        if (isMedia) {
+            if (await newMediaMessage(ctx, mediaGroupId ?? '', count)) {
+                await enableRo(
+                    ctx, ctx.message.from.id, 86400,
+                    ctx.message.message_id, ctx.message.from.first_name,
+                    `за ${count} або більше медіа підряд`
+                )
+            }
+        } else {
+            await newNonMediaMessage(ctx)
         }
-    } else {
-        await newNonMediaMessage(ctx)
     }
+    await next()
 }
 
 

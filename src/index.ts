@@ -1,9 +1,9 @@
 import { Telegraf } from "telegraf"
-import * as redis from 'redis'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as modules from "./modules"
 import { Context } from "./types"
+import * as redis from './redis/async'
 import { RedisStorage } from "./redis/storage"
 
 // Reading config file

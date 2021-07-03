@@ -1,4 +1,4 @@
-import { RedisClient, Multi } from "redis"
+import { RedisClient, Multi, createClient } from "redis"
 import { promisify } from 'util'
 const redisCommands = require("redis-commands")
 
@@ -67,4 +67,4 @@ declare module 'redis' {
     }
 }
 
-export { RedisClient, Multi }
+export { RedisClient, Multi, createClient }

@@ -11,8 +11,8 @@ const NUKE_LIST: NCityInfo[] = [
 ]
 
 const NUKE_LIST_COMMAND = "nuke_list"
-const NUKE_COMMON_PARAMS = "hob_psi=5&hob_ft=47553&casualties=1&fallout=1&ff=52&psi=20,5,1"
-const NUKE_REGEX = new RegExp(/\/nuke_([a-zA-Z_\-\.]+)(@\S+)?/)
+const NUKE_COMMON_PARAMS = "casualties=1&fallout=1&ff=52&psi=20,5,1&zm=9"
+const NUKE_REGEX = new RegExp(/\/nuke_([a-zA-Z_\-\.]+)/)
 
 function getBombSize() {
     const sizes = [
@@ -34,29 +34,30 @@ function getBombSize() {
 async function command_nukeList(ctx: MatchedContext<Context, 'text'>): Promise<void> {
     if (!isBotCommand(ctx)) return
 
-    let lines = NUKE_LIST.reduce((lines, nuke) => {
-        return lines.concat([`    /nuke_${nuke.id}@${ctx.botInfo.username} - ${nuke.lText}`])
+    const botPart = ctx.chat.type == 'private' ? '' : '@' + ctx.botInfo.username
+
+    const lines = NUKE_LIST.reduce((lines, nuke) => {
+        return lines.concat([`    /nuke_${nuke.id}${botPart} - ${nuke.lText}`])
     }, ["<b>Бамбiть с вертольота:</b>"])
 
-    await ctx.reply(lines.join('\n'), {reply_to_message_id: ctx.message.message_id})
+    await ctx.replyWithHTML(lines.join('\n'), {reply_to_message_id: ctx.message.message_id})
 }
 
-async function event_onMessage(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+async function event_onMessage(ctx: MatchedContext<Context, 'text'>, next: () => Promise<void>): Promise<void> {
+    if (!isBotCommand(ctx)) return next()
     const match = NUKE_REGEX.exec(ctx.message.text)
-    if (!match) return
-    const id = match[1], user = match[2]
-    if (user && user != ctx.botInfo.username) return
-    if (!user && ctx.chat.type !== "private") return
+    if (!match) return await next()
+    const id = match[1]
     const city = NUKE_LIST.find(c => c.id == id)
     if (!city) return
-    let zm = 8, text = "(долетіло до Землі)", bomb = getBombSize()
+    let airbust = "airburst=0&hob_ft=0", text = "(долетіло до Землі)", bomb = getBombSize()
     if (getRandomIntInclusive(0, 1) == 1) {
-        zm = 9; text = "(йобнуло у повітрі)"
+        airbust = "hob_psi=5&hob_ft=47553"; text = "(йобнуло у повітрі)"
     }
     const reply = 'Знайшла у шухлядi бiмбу у '
-        + bomb + ` кiлотонн, хуйнула ${city.bText}, і <a href = "https://nuclearsecrecy.com/nukemap/?kt=`
-        + bomb + '&' + NUKE_COMMON_PARAMS
-        + `&lat=${city.lat}&lng=${city.lng}&zm=${zm}`
+        + bomb + ` кiлотонн, хуйнула ${city.bText}, і <a href = "https://nuclearsecrecy.com/nukemap/?&kt=`
+        + bomb + `&lat=${city.lat}&lng=${city.lng}&${airbust}` 
+        + '&' + NUKE_COMMON_PARAMS
         + '">ось</a> шо вийшло ' + text
     await ctx.replyWithHTML(reply, {reply_to_message_id: ctx.message.message_id})
 }
