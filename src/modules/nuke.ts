@@ -16,7 +16,18 @@ export class NukeModule extends Module<NukeModuleConfig> {
     readonly NUKE_LIST: NCityInfo[] = [
         { id: "moscow", bText: "до Мацкви", lText: "хуйнуть Мацкву", lat: '55.7542102', lng: '37.620095'},
         { id: "rivne", bText: "у Рівне", lText: "зачинити Рiвненський осередок", lat: '50.619900', lng: '26.251617'},
-        { id: "cherkasy", bText: "до Черкас", lText: "Черкасси - файне мiсто", lat: '49.444431', lng: '32.059769'}
+        { id: "cherkasy", bText: "до Черкас", lText: "Черкасси - файне мiсто", lat: '49.444431', lng: '32.059769'},
+        { id: "lviv", bText: "до Львова", lText: "бахнути по Львову", lat: '49.841142', lng: '24.028884' },
+        { id: "kharkiv", bText: "по Харкову", lText: "бахнути по Харкову", lat: '50.004589', lng: '36.235646'},
+        { id: "mariupol", bText: "по Маріуполю", lText: "бахнути по Маріуполю", lat: '47.112200', lng: '37.558564'},
+        { id: "kyiv", bText: "по Києву", lText: "бахнути по Київу", lat: '50.452682', lng: '30.539047'},
+        { id: "boryspil", bText: "по Борисполю", lText: "бахнути по Бориспілю", lat: '50.347929', lng: '30.956096'},
+        { id: "rostov", bText: "по Ростову", lText: "хуйнуть Ростов", lat: '47.233517', lng: '39.702932'},
+        { id: "donetsk", bText: "по Донецьку", lText: "бахнути по Донецьку", lat: '48.017622', lng: '37.789059'},
+        { id: "krasnodar", bText: "по Краснодару", lText: "хуйнуть Краснодар", lat: '45.037473', lng: '38.975125'},
+        { id: "st_peterburg", bText: "по Санкт-Пєтєрбургу", lText: "хуйнуть Санкт-Петербург", lat: '59.935923', lng: '38.975125'},
+        { id: "voroneg", bText: "по Воронєжу", lText: "хуйнуть Воронiж", lat: '51.667481', lng: '39.208400'},
+        { id: "mykolayiv", bText: "по Миколаєву", lText: "бахнути по Миколаїву", lat: '46.967241', lng: '32.032497'}
     ]
 
     readonly NUKE_COMMON_PARAMS = "casualties=1&fallout=1&ff=52&psi=20,5,1&zm=9"
