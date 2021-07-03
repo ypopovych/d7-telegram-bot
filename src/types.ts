@@ -3,6 +3,8 @@ import { Context as BContext, NarrowedContext, Types } from 'telegraf'
 export interface Storage {
     getValues(chatId: string, module: string, keys: string[]): Promise<any[]>
     hasValue(chatId: string, module: string, key: string): Promise<boolean>
+    incValue(chatId: string, module: string, key: string, amount: number): Promise<number>
+    decValue(chatId: string, module: string, key: string, amount: number): Promise<number>
     setValues(chatId: string, module: string, values: Record<string, any>, ttl?: number): Promise<void>
     removeValues(chatId: string, module: string, keys: string[]): Promise<void>
 

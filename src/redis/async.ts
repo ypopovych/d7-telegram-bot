@@ -56,6 +56,8 @@ declare module 'redis' {
         existsAsync: AsyncOverloadedCommand<string, number>
         mgetAsync: AsyncOverloadedCommand<string, string[]>
         delAsync: AsyncOverloadedCommand<string, number>
+        incrbyAsync(key: string, increment: number): Promise<number>
+        decrbyAsync(key: string, decrement: number): Promise<number>
         hincrbyAsync(key: string, field: string, increment: number): Promise<number>
         hexistsAsync(key: string, field: string): Promise<number>
     }

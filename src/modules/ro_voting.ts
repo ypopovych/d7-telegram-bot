@@ -1,6 +1,8 @@
 import { Telegraf } from "telegraf"
 import { Context, MatchedContext } from "../types"
-import { ensureChatAdmin, ensureMessageCitation, getHoursString, enableRo } from "../utils"
+import { ensureChatAdmin, ensureMessageCitation } from "../utils/validators"
+import { getHoursString } from "../utils/string"
+import { enableRo } from "../utils/ro"
 
 const MODULE = "RO_VOTING"
 const SET_NUMBER_OF_VOTES_COMMAND = "set_number_of_votes"
@@ -91,7 +93,7 @@ async function event_onPoll(ctx: MatchedContext<Context, 'poll'>): Promise<void>
     if (ctx.poll.options[0].voter_count >= pollData.votesCount) {
         await ctx.stopPoll(pollData.messageId)
         await removePoll(ctx, ctx.poll.id)
-        await enableRo(ctx, pollData.userId, pollData.period, pollData.messageId, pollData.userName)
+        await enableRo(ctx, pollData.userId, pollData.period, pollData.messageId, pollData.userName, '')
     } else if (ctx.poll.options[1].voter_count >= pollData.votesCount) {
         await ctx.stopPoll(pollData.messageId)
         await removePoll(ctx, ctx.poll.id)

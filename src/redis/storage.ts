@@ -30,6 +30,14 @@ export class RedisStorage implements Storage {
             .then(num => num == 1)
     }
 
+    incValue(chatId: string, module: string, key: string, amount: number): Promise<number> {
+        return this.redis.incrbyAsync(this.valuePrefix(chatId, module, key), amount)
+    }
+
+    decValue(chatId: string, module: string, key: string, amount: number): Promise<number> {
+        return this.redis.decrbyAsync(this.valuePrefix(chatId, module, key), amount)
+    }
+
     setValues(chatId: string, module: string, values: Record<string, any>, ttl?: number): Promise<void> {
         return Object
             .entries(values)
