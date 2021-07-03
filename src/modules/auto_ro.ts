@@ -92,8 +92,8 @@ export class AutoRoModule extends Module<AutoRoModuleConfig> {
     title(): string { return 'АвтоРО' }
     commands(): Record<string, string> {
         return {
-            'auto_ro_message_count': 'Переглянути кількість медія для АвтоРО',
-            'set_auto_ro_message_count': 'Встановити кількість медіа для АвтоРО',
+            'auto_ro_message_count': 'переглянути кількість медія для АвтоРО',
+            'set_auto_ro_message_count': 'встановити кількість медіа для АвтоРО',
         }
     }
 

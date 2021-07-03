@@ -132,9 +132,9 @@ export class RoVotingModule extends Module<RoVotingModuleConfig> {
     title(): string { return 'Демократія' }
     commands(): Record<string, string> {
         return {
-            'number_of_votes': 'Переглянути кількість голосів для РО',
-            'set_number_of_votes': 'Встановити кількість голосів для РО',
-            'ro_24h_poll': 'Запустити голосування для РО на 24 години'
+            'number_of_votes': 'переглянути кількість голосів для РО',
+            'set_number_of_votes': 'встановити кількість голосів для РО',
+            'ro_24h_poll': 'запустити голосування для РО на 24 години'
         }
     }
 

@@ -68,8 +68,8 @@ export class AdminModule extends Module<AdminModuleConfig> {
     title(): string { return 'Адміни та Супер-Адміни' }
     commands(): Record<string, string> {
         return {
-            'admin': 'Зробити користувача адміном й встановити плашку',
-            'superadmin': 'Зробити користувача супер-адміном й встановити плашку'
+            'admin': 'зробити користувача адміном й встановити плашку',
+            'superadmin': 'зробити користувача супер-адміном й встановити плашку'
         }
     }
 

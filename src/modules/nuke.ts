@@ -80,7 +80,7 @@ export class NukeModule extends Module<NukeModuleConfig> {
         return this.NUKE_LIST.reduce((list, city) => {
             list[`nuke_${city.id}`] = city.lText
             return list
-        }, {'nuke_list': 'Отримати список міст для бомбардування'} as Record<string, string>)
+        }, {'nuke_list': 'отримати список міст для бомбардування'} as Record<string, string>)
     }
 
     // Helpers

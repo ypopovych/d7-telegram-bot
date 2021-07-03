@@ -67,9 +67,9 @@ export class BanModule extends Module<BanModuleConfig> {
     title(): string { return 'Банхаммер' }
     commands(): Record<string, string> {
         return {
-            'ban': 'Забанити користувача назавжди',
-            'ban_24h': 'Забанити користувача на 24 години',
-            'unban': 'Разбанити користувача',
+            'ban': 'забанити користувача назавжди',
+            'ban_24h': 'забанити користувача на 24 години',
+            'unban': 'розбанити користувача',
         }
     }
 }

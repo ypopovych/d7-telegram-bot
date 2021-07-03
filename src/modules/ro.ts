@@ -64,9 +64,9 @@ export class RoModule extends Module<RoModuleConfig> {
     title(): string { return 'Банхаммерчик' }
     commands(): Record<string, string> {
         return {
-            'ro_24h': 'Відправити в РО на 24 години',
-            'ro_7d': 'Відправити в РО на 7 діб',
-            'unro': 'Витягнути з РО'
+            'ro_24h': 'відправити в РО на 24 години',
+            'ro_7d': 'відправити в РО на 7 діб',
+            'unro': 'витягнути з РО'
         }
     }
 }
