@@ -1,21 +1,22 @@
-import { Context } from "../types"
+import { Telegram } from "telegraf"
+import { Storage } from "../types"
 
 const MODULE = "title"
 const TITLES_KEY = "titles"
 
-export async function setTitle(ctx: Context, userId: number, title: string): Promise<void> {
-    await ctx.promoteChatMember(userId, { can_invite_users: true })
-    await ctx.setChatAdministratorCustomTitle(userId, title)
-    let titles: Record<number, string> = await ctx.storage.getConfigValue(String(ctx.chat!.id), MODULE, TITLES_KEY) ?? {}
+export async function setTitle(telegram: Telegram, storage: Storage, chatId: string, userId: number, title: string): Promise<void> {
+    await telegram.promoteChatMember(chatId, userId, { can_invite_users: true })
+    await telegram.setChatAdministratorCustomTitle(chatId, userId, title)
+    let titles: Record<number, string> = await storage.getConfigValue(chatId, MODULE, TITLES_KEY) ?? {}
     titles[userId] = title
-    await ctx.storage.setConfigValue(String(ctx.chat!.id), MODULE, TITLES_KEY, titles)
+    await storage.setConfigValue(chatId, MODULE, TITLES_KEY, titles)
 }
 
-export async function restoreTitle(ctx: Context, userId: number): Promise<void> {
-    let titles: Record<number, string> = await ctx.storage.getConfigValue(String(ctx.chat!.id), MODULE, TITLES_KEY) ?? {}
+export async function restoreTitle(telegram: Telegram, storage: Storage, chatId: string, userId: number): Promise<void> {
+    let titles: Record<number, string> = await storage.getConfigValue(chatId, MODULE, TITLES_KEY) ?? {}
     const title = titles[userId]
     if (title) {
-        await ctx.promoteChatMember(userId, { can_invite_users: true })
-        await ctx.setChatAdministratorCustomTitle(userId, title)
+        await telegram.promoteChatMember(chatId, userId, { can_invite_users: true })
+        await telegram.setChatAdministratorCustomTitle(chatId, userId, title)
     }
 }

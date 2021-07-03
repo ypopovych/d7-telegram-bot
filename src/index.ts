@@ -14,6 +14,8 @@ const bot = new Telegraf<Context>(config.botToken)
 
 // Adding cache instance to the context
 bot.context.storage = new RedisStorage(redis.createClient(config.redis.url), config.redis.options)
+// Adding config to the context
+bot.context.simpleCommands = config.simpleCommands ?? []
 
 // Registering bot modules
 modules.register(bot)

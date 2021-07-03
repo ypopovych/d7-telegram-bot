@@ -70,7 +70,8 @@ async function event_onMessage(ctx: MatchedContext<Context, 'message'>, next: ()
         if (isMedia) {
             if (await newMediaMessage(ctx, mediaGroupId ?? '', count)) {
                 await enableRo(
-                    ctx, ctx.message.from.id, 86400,
+                    ctx.telegram, ctx.storage, String(ctx.chat.id),
+                    ctx.message.from.id, 86400,
                     ctx.message.message_id, ctx.message.from.first_name,
                     `за ${count} або більше медіа підряд`
                 )

@@ -14,6 +14,7 @@ export interface Storage {
 
 export interface Context extends BContext {
     storage: Storage
+    simpleCommands: string[]
 }
 
 export type MatchedContext<

@@ -8,12 +8,12 @@ const ADMIN_COMMAND = "admin"
 const SUPERADMIN_COMMAND = "superadmin"
 
 function makeAdmin(ctx: MatchedContext<Context, 'text'>, userId: number, title: string): Promise<void> {
-    return setTitle(ctx, userId, title)
+    return setTitle(ctx.telegram, ctx.storage, String(ctx.chat.id), userId, title)
 }
 
 async function makeSuperAdmin(ctx: MatchedContext<Context, 'text'>, userId: number, title: string): Promise<void> {
     await makeAdmin(ctx, userId, title)
-    await addSuperAdmin(ctx, userId)
+    await addSuperAdmin(ctx.telegram, ctx.storage, String(ctx.chat.id), userId)
 }
 
 async function command_admin(ctx: MatchedContext<Context, 'text'>): Promise<void> {
@@ -52,7 +52,7 @@ async function event_onChatMember(ctx: MatchedContext<Context, 'chat_member'>, n
         ["kicked", "left", "restricted"].includes(ctx.chatMember.old_chat_member.status) 
         && ctx.chatMember.new_chat_member.status == "member"
     ) {
-        await restoreTitle(ctx, ctx.chatMember.new_chat_member.user.id)
+        await restoreTitle(ctx.telegram, ctx.storage, String(ctx.chat.id), ctx.chatMember.new_chat_member.user.id)
     }
     await next()
 }

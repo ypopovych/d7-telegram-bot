@@ -1,9 +1,9 @@
-import { Context } from "telegraf"
+import { Telegram } from "telegraf"
 
-export function banUser(ctx: Context, userId: number, until: number): Promise<void> {
-    return ctx.kickChatMember(userId, until).then()
+export function banUser(telegram: Telegram, chatId: string, userId: number, until: number): Promise<void> {
+    return telegram.kickChatMember(chatId, userId, until).then()
 }
 
-export function unbanUser(ctx: Context, userId: number): Promise<void> {
-    return ctx.unbanChatMember(userId, { only_if_banned: true }).then()
+export function unbanUser(telegram: Telegram, chatId: string, userId: number): Promise<void> {
+    return telegram.unbanChatMember(chatId, userId, { only_if_banned: true }).then()
 }

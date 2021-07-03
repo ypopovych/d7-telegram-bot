@@ -6,6 +6,7 @@
             "keyPrefix": "d7bot"
         }
     },
+    "simpleCommands": ["ro_24h_poll"],
     "webHook": {
         "domain": null,
         "host": "0.0.0.0",

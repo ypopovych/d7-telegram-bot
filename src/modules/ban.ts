@@ -12,7 +12,7 @@ async function command_ban(ctx: MatchedContext<Context, 'text'>): Promise<void> 
     if (!await ensureChatAdmin(ctx, ctx.from)) return
     if (!await ensureMessageCitation(ctx)) return
 
-    await banUser(ctx, ctx.message.reply_to_message!.from!.id, Date.now() / 1000)
+    await banUser(ctx.telegram, String(ctx.chat.id), ctx.message.reply_to_message!.from!.id, Date.now() / 1000)
 
     await ctx.reply(
         `Користувач ${ctx.message.reply_to_message!.from!.first_name} полетів у бан`,
@@ -25,7 +25,7 @@ async function command_ban_24h(ctx: MatchedContext<Context, 'text'>): Promise<vo
     if (!await ensureChatAdmin(ctx, ctx.from)) return
     if (!await ensureMessageCitation(ctx)) return
 
-    await banUser(ctx, ctx.message.reply_to_message!.from!.id, Date.now() / 1000 + 86400)
+    await banUser(ctx.telegram, String(ctx.chat.id), ctx.message.reply_to_message!.from!.id, Date.now() / 1000 + 86400)
 
     await ctx.reply(
         `Користувач ${ctx.message.reply_to_message!.from!.first_name} полетів у бан на 24 години`,
@@ -38,7 +38,7 @@ async function command_unban(ctx: MatchedContext<Context, 'text'>): Promise<void
     if (!await ensureChatAdmin(ctx, ctx.from)) return
     if (!await ensureMessageCitation(ctx)) return
 
-    await unbanUser(ctx, ctx.message.reply_to_message!.from!.id)
+    await unbanUser(ctx.telegram, String(ctx.chat.id), ctx.message.reply_to_message!.from!.id)
 
     await ctx.reply(
         `Користувач ${ctx.message.reply_to_message!.from!.first_name} розбанений`,

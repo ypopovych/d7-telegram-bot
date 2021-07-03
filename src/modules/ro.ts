@@ -13,7 +13,8 @@ async function command_ro_7d(ctx: MatchedContext<Context, 'text'>): Promise<void
     if (!await ensureMessageCitation(ctx)) return
 
     await enableRo(
-        ctx, ctx.message.reply_to_message!.from!.id, 86400*7,
+        ctx.telegram, ctx.storage, String(ctx.chat.id),
+        ctx.message.reply_to_message!.from!.id, 86400 * 7,
         ctx.message.message_id, ctx.message.reply_to_message!.from!.first_name, ''
     )
 }
@@ -24,7 +25,8 @@ async function command_ro_24h(ctx: MatchedContext<Context, 'text'>): Promise<voi
     if (!await ensureMessageCitation(ctx)) return
 
     await enableRo(
-        ctx, ctx.message.reply_to_message!.from!.id, 86400,
+        ctx.telegram, ctx.storage, String(ctx.chat.id),
+        ctx.message.reply_to_message!.from!.id, 86400,
         ctx.message.message_id, ctx.message.reply_to_message!.from!.first_name, ''
     )
 }
@@ -35,7 +37,8 @@ async function command_unro(ctx: MatchedContext<Context, 'text'>): Promise<void>
     if (!await ensureMessageCitation(ctx)) return
 
     await disableRo(
-        ctx, ctx.message.reply_to_message!.from!.id, 
+        ctx.telegram, String(ctx.chat.id),
+        ctx.message.reply_to_message!.from!.id, 
         ctx.message.message_id, ctx.message.reply_to_message!.from!.first_name
     )
 }

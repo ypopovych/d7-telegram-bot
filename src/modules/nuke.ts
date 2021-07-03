@@ -12,7 +12,7 @@ const NUKE_LIST: NCityInfo[] = [
 
 const NUKE_LIST_COMMAND = "nuke_list"
 const NUKE_COMMON_PARAMS = "casualties=1&fallout=1&ff=52&psi=20,5,1&zm=9"
-const NUKE_REGEX = new RegExp(/\/nuke_([a-zA-Z_\-\.]+)/)
+const NUKE_REGEX = new RegExp(/\/nuke_([a-zA-Z0-9_\-\.]+)/)
 
 function getBombSize() {
     const sizes = [
