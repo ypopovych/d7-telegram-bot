@@ -2,7 +2,9 @@ import { Telegraf } from "telegraf"
 import { Context, MatchedContext } from "../types"
 
 const NUKE_LIST = [
-    { id: "moscow", bText: "до Мацкви", lText: "хуйнуть Мацкву", lat: '55.7542102', lng: '37.620095'}
+    { id: "moscow", bText: "до Мацкви", lText: "хуйнуть Мацкву", lat: '55.7542102', lng: '37.620095'},
+    { id: "rivne", bText: "у Рівне", lText: "зачинити Рiвненський осередок", lat: '50.619900', lng: '26.251617'},
+    { id: "cherkasy", bText: "до Черкас", lText: "Черкасси - файне мiсто", lat: '49.444431', lng: '32.059769'}
 ]
 
 const NUKE_LIST_COMMAND = "nuke_list"
