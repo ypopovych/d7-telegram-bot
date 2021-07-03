@@ -27,7 +27,8 @@ export class NukeModule extends Module<NukeModuleConfig> {
         { id: "krasnodar", bText: "по Краснодару", lText: "хуйнуть Краснодар", lat: '45.037473', lng: '38.975125'},
         { id: "st_peterburg", bText: "по Санкт-Пєтєрбургу", lText: "хуйнуть Санкт-Петербург", lat: '59.935923', lng: '38.975125'},
         { id: "voroneg", bText: "по Воронєжу", lText: "хуйнуть Воронiж", lat: '51.667481', lng: '39.208400'},
-        { id: "mykolayiv", bText: "по Миколаєву", lText: "бахнути по Миколаїву", lat: '46.967241', lng: '32.032497'}
+        { id: "mykolayiv", bText: "по Миколаєву", lText: "бахнути по Миколаїву", lat: '46.967241', lng: '32.032497'},
+        { id: "misery", bText: "по острову Misery в США", lText: "бахнути по острову Misery в США", lat: '42.548135', lng: '-70.798274'}
     ]
 
     readonly NUKE_COMMON_PARAMS = "casualties=1&fallout=1&ff=52&psi=20,5,1&zm=9"
