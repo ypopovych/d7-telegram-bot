@@ -50,10 +50,10 @@ export class AdminModule extends Module<AdminModuleConfig> {
     }
 
     private async event_onChatMember(ctx: MatchedContext<Context, 'chat_member'>, next: () => Promise<void>) {
-        console.log("CHAT MEMBER UPDATED:", ctx.chatMember)
+        // Restores title if user was banned / set to RO
         if (
             ["kicked", "left", "restricted"].includes(ctx.chatMember.old_chat_member.status) 
-            && ctx.chatMember.new_chat_member.status == "member"
+            && ["member", "administrator"].includes(ctx.chatMember.new_chat_member.status)
         ) {
             await restoreTitle(ctx.telegram, this.storage, String(ctx.chat.id), ctx.chatMember.new_chat_member.user.id)
         }
