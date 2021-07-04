@@ -52,6 +52,28 @@ export class RedisStorage implements Storage {
             .execAsync().then()
     }
 
+    updateValues(chatId: string, module: string, values: Record<string, any>, ttl?: number): Promise<Record<string, any>> {
+        const kvs = Object.entries(values)
+            .map(([key, val]) => [
+                key,
+                this.valuePrefix(chatId, module, key),
+                JSON.stringify(val)
+            ])
+        return kvs.reduce((multi, [_, path, val]) => {
+                const upd = multi.get(path).set(path, val)
+                return !!ttl ? upd.expire(path, ttl) : upd
+            }, this.redis.multi())
+            .execAsync()
+            .then((results) => {
+                const increment = !!ttl ? 3 : 2
+                const response: Record<string, any> = {}
+                for (let i = 0; i < results.length; i += increment) {
+                    response[kvs[i/increment][0]] = JSON.parse(results[i])
+                }
+                return response
+            })
+    }
+
     removeValues(chatId: string, module: string, keys: string[]): Promise<void> {
         const newKeys = keys.map(k => this.valuePrefix(chatId, module, k))
         return this.redis.delAsync(newKeys).then()

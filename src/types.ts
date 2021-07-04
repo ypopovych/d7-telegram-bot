@@ -6,6 +6,7 @@ export interface Storage {
     incValue(chatId: string, module: string, key: string, amount: number): Promise<number>
     decValue(chatId: string, module: string, key: string, amount: number): Promise<number>
     setValues(chatId: string, module: string, values: Record<string, any>, ttl?: number): Promise<void>
+    updateValues(chatId: string, module: string, values: Record<string, any>, ttl?: number): Promise<Record<string, any>>
     removeValues(chatId: string, module: string, keys: string[]): Promise<void>
 
     getConfigValue(chatId: string, module: string, key: string): Promise<any>

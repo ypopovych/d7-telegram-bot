@@ -63,7 +63,7 @@ export class AutoRoModule extends Module<AutoRoModuleConfig> {
         if (count > 0) {
             const { isMedia, mediaGroupId } = isMediaMessage(ctx.message)
             if (isMedia) {
-                if (await this.newMediaMessage(ctx, mediaGroupId ?? '', count)) {
+                if (await this.newMediaMessage(ctx, mediaGroupId || '', count)) {
                     await enableRo(
                         ctx.telegram, this.storage, String(ctx.chat.id),
                         ctx.message.from.id, 86400,
@@ -110,15 +110,14 @@ export class AutoRoModule extends Module<AutoRoModuleConfig> {
         ctx: MatchedContext<Context, 'message'>, mediaGroupId: string, count: number
     ): Promise<boolean> {
         const groupId = await this.storage
-            .getValues(String(ctx.chat.id), this.moduleName(), [this.MEDIA_GROUP_ID_KEY])
-            .then(groups => groups[0] ?? '')
+            .updateValues(
+                String(ctx.chat.id), this.moduleName(),
+                {[this.MEDIA_GROUP_ID_KEY]: mediaGroupId}
+            )
+            .then(groups => groups[this.MEDIA_GROUP_ID_KEY] ?? '')
         if (groupId == mediaGroupId && mediaGroupId != '') {
             return false
         }
-        await this.storage.setValues(
-            String(ctx.chat.id), this.moduleName(),
-            { [this.MEDIA_GROUP_ID_KEY]: mediaGroupId }, 86400
-        )
         const current = await this.storage.incValue(
             String(ctx.chat.id), this.moduleName(), this.NUMBER_OF_MESSAGES_KEY, 1
         )
