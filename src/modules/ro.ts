@@ -43,7 +43,7 @@ export class RoModule extends Module<RoModuleConfig> {
         if (!await ensureMessageCitation(ctx)) return
     
         await disableRo(
-            ctx.telegram, String(ctx.chat.id),
+            ctx.telegram, this.storage, String(ctx.chat.id),
             ctx.message.reply_to_message!.from!.id, 
             ctx.message.message_id, ctx.message.reply_to_message!.from!.first_name
         )

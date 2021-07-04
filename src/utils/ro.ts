@@ -3,6 +3,7 @@ import { ChatMemberRestricted } from "typegram"
 import { Storage } from "../types"
 import { isChatAdmin } from './validators'
 import { getHoursString } from './string'
+import { restoreTitle } from './title'
 
 
 export async function enableRo(
@@ -38,7 +39,7 @@ export async function enableRo(
 
 
 export async function disableRo(
-    telegram: Telegram, chatId: string,
+    telegram: Telegram, storage: Storage, chatId: string,
     userId: number, messageId: number, userName: string
 ): Promise<void> {
     const user = await telegram.getChatMember(chatId, userId)
@@ -84,5 +85,6 @@ export async function disableRo(
             `Користувач ${userName} помилуваний`,
             { reply_to_message_id: messageId }
         )
+        await restoreTitle(telegram, storage, chatId, userId)
     }
 }
