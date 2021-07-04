@@ -1,6 +1,4 @@
 import { Context as BContext, NarrowedContext, Types } from 'telegraf'
-import { DelayTaskRunner } from './utils/delay'
-
 
 export interface Storage {
     getValues(chatId: string, module: string, keys: string[]): Promise<any[]>
@@ -14,9 +12,12 @@ export interface Storage {
     setConfigValue(chatId: string, module: string, key: string, value: any): Promise<void>
 }
 
-export interface Context extends BContext {
-  taskRunner: DelayTaskRunner
+export interface AsyncTaskRunner {
+    once(wait: number, task: () => any): symbol
+    cancel(taskId: symbol): void
 }
+
+export interface Context extends BContext {}
 
 export type MatchedContext<
   C extends BContext,

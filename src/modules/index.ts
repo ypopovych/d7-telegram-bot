@@ -1,5 +1,5 @@
 import { Telegraf } from "telegraf"
-import { Context, Storage, MatchedContext, MethodConfig } from "../types"
+import { Context, Storage, MatchedContext, MethodConfig, AsyncTaskRunner } from "../types"
 import { ModuleFactory } from "../module"
 import { AdminModule } from "./admin"
 import { AutoRoModule } from "./auto_ro"
@@ -24,7 +24,9 @@ type HelpModuleConfig = {
     commands: Record<string, string>
 }
 
-async function command_help(commands: HelpModuleConfig[], ctx: MatchedContext<Context, 'text'>): Promise<void> {
+async function command_help(
+    commands: HelpModuleConfig[], taskRunner: AsyncTaskRunner, ctx: MatchedContext<Context, 'text'>
+): Promise<void> {
     const lines = commands.reduce((lines, cmd) => {
         lines.push("")
         lines.push(`<b>${cmd.title}</b>`)
@@ -44,14 +46,16 @@ async function command_help(commands: HelpModuleConfig[], ctx: MatchedContext<Co
         }
     )
     const chatId = ctx.chat.id, messageId = message.message_id, telegram = ctx.telegram
-    ctx.taskRunner.once(180, () => telegram.deleteMessage(chatId, messageId))
+    taskRunner.once(180, () => telegram.deleteMessage(chatId, messageId))
 }
 
-export function registerModulesIn(bot: Telegraf<Context>, storage: Storage, configs: Record<string, any>) {
+export function registerModulesIn(
+    bot: Telegraf<Context>, storage: Storage, taskRunner: AsyncTaskRunner, configs: Record<string, any>
+) {
     let helpInfo: HelpModuleConfig[] = []
     let helpConfig: HelpMethodConfig = Object.assign({}, DEFAULT_HELP_CONFIG, configs["help"] ?? {})
     for (let mFact of ALL_MODULES) {
-        const module = new mFact(storage, configs[mFact.moduleName] ?? {})
+        const module = new mFact(storage, taskRunner, configs[mFact.moduleName] ?? {})
         module.register(bot)
         if (helpConfig.enabled) {
             helpInfo.push({
@@ -61,7 +65,7 @@ export function registerModulesIn(bot: Telegraf<Context>, storage: Storage, conf
         }
     }
     if (helpConfig.enabled) {
-        bot.help((ctx: MatchedContext<Context, 'text'>) => command_help(helpInfo, ctx))
+        bot.help((ctx: MatchedContext<Context, 'text'>) => command_help(helpInfo, taskRunner, ctx))
     }
 }
 

@@ -1,21 +1,23 @@
 import { Telegraf } from 'telegraf'
 import merge from 'ts-deepmerge'
-import { Context, Storage } from './types'
+import { AsyncTaskRunner, Context, Storage } from './types'
 
 export interface ModuleFactory<Config extends Record<string, any>> {
-    new (storage: Storage, config: Partial<Config>): Module<Config>
+    new (storage: Storage, taskRunner: AsyncTaskRunner, config: Partial<Config>): Module<Config>
     readonly moduleName: string
     readonly defaultConfig: Config
   }
   
   export abstract class Module<Config extends Record<string, any>> {
     readonly storage: Storage
+    readonly taskRunner: AsyncTaskRunner
     readonly config!: Config
   
     static readonly moduleName: string
   
-    constructor(storage: Storage, config: Partial<Config>) {
+    constructor(storage: Storage, taskRunner: AsyncTaskRunner, config: Partial<Config>) {
       this.storage = storage
+      this.taskRunner = taskRunner
       const cfg = (this.constructor as ModuleFactory<Config>).defaultConfig
       this.config = merge(cfg, config) as Config
     }

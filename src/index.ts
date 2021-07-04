@@ -5,7 +5,7 @@ import * as modules from "./modules"
 import { Context } from "./types"
 import * as redis from './redis/async'
 import { RedisStorage } from "./redis/storage"
-import { DelayTaskRunner } from './utils/delay'
+import { AsyncTaskRunner } from './utils/delay'
 
 // Reading config file
 const config = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "config.json"), { encoding: "utf8" }))
@@ -14,13 +14,13 @@ const config = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "config.jso
 const bot = new Telegraf<Context>(config.botToken)
 
 // Add task runner
-bot.context.taskRunner = new DelayTaskRunner()
+const taskRunner = new AsyncTaskRunner()
 
 // Storage instance
 const storage = new RedisStorage(redis.createClient(config.redis.url), config.redis.options)
 
 // Registering bot modules
-modules.registerModulesIn(bot, storage, config.modules ?? {})
+modules.registerModulesIn(bot, storage, taskRunner, config.modules ?? {})
 
 // WebHook setup
 let options: Telegraf.LaunchOptions = {
@@ -66,17 +66,17 @@ if (config.webHook && config.webHook.domain) {
 }
 
 // Starting task runner
-bot.context.taskRunner?.start()
+taskRunner.start()
 
 // Launching bot
 bot.launch(options)
 
 // Enable graceful stop
 process.once('SIGINT', () => {
-    bot.context.taskRunner?.stop()
+    taskRunner.stop()
     bot.stop('SIGINT')
 })
 process.once('SIGTERM', () => {
-    bot.context.taskRunner?.stop()
+    taskRunner.stop()
     bot.stop('SIGTERM')
 })

@@ -1,12 +1,13 @@
+import { AsyncTaskRunner as IAsyncTaskRunner } from '../types'
 
-export type Task = { startDate: number, task: () => any }
+type Task = { startDate: number, task: () => any }
 
-export class DelayTaskRunner {
-    private tasks: Array<Task>
+export class AsyncTaskRunner implements IAsyncTaskRunner {
+    private tasks: Map<symbol, Task>
     private timer?: any 
 
     constructor() {
-        this.tasks = []
+        this.tasks = new Map()
     }
 
     start() {
@@ -21,15 +22,27 @@ export class DelayTaskRunner {
 
     private tick() {
         const now = Date.now()
-        const outdated = this.tasks.filter(task => task.startDate <= now)
-        this.tasks = this.tasks.filter(task => task.startDate > now)
-        for (let task of outdated) {
-            task.task()
+
+        const waitingTasks: Map<symbol, Task> = new Map()
+        for (const [id, task] of this.tasks.entries()) {
+            if (task.startDate > now) {
+                waitingTasks.set(id, task)
+            } else {
+                task.task()
+            }
         }
+
+        this.tasks = waitingTasks
     }
 
-    once(wait: number, task: () => any) {
-        this.tasks.push({ startDate: Date.now() + (wait * 1000), task })
+    once(wait: number, task: () => any): symbol {
+        const id: symbol = Symbol()
+        this.tasks.set(id, { startDate: Date.now() + (wait * 1000), task })
+        return id
+    }
+
+    cancel(task: symbol): void {
+        this.tasks.delete(task)
     }
 }
 
