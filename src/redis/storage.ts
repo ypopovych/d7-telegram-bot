@@ -70,14 +70,14 @@ export class RedisStorage implements Storage {
     }
 
     private prefix(chatId: string, key: string): string {
-        return this.keyPrefix + "_" + chatId + "_" + key
+        return this.keyPrefix + "__" + chatId + "__" + key
     }
 
     private valuePrefix(chatId: string, module: string, key: string) {
-        return this.prefix(chatId, STORAGE_PREFIX + module + "_" + key)
+        return this.prefix(chatId, STORAGE_PREFIX + "__" + module + "__" + key)
     }
 
     private configPrefix(chatId: string, module: string): string {
-        return this.prefix(chatId, CONFIG_KEY + "_" + module)
+        return this.prefix(chatId, CONFIG_KEY + "__" + module)
     }
 }
