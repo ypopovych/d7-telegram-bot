@@ -5,7 +5,7 @@ import * as modules from "./modules"
 import { Context } from "./types"
 import * as redis from './redis/async'
 import { RedisStorage } from "./redis/storage"
-import { AsyncTaskRunner } from './utils/delay'
+import { AsyncTaskRunner, delay } from './utils/delay'
 
 // Reading config file
 const config = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "config.json"), { encoding: "utf8" }))
@@ -29,6 +29,7 @@ let options: Telegraf.LaunchOptions = {
         "poll_answer", "edited_message"
     ]
 }
+
 if (config.webHook && config.webHook.domain) {
     options.webhook = {
         domain: config.webHook.domain,
@@ -69,7 +70,15 @@ if (config.webHook && config.webHook.domain) {
 taskRunner.start()
 
 // Launching bot
-bot.launch(options)
+bot.launch(options).then(() => delay(1000)).then(() => {
+    if (options.webhook && config.webHook.tls && config.webHook.tls.selfSigned) {
+        bot.telegram.setWebhook(`${options.webhook.domain}${options.webhook.hookPath}`, {
+            drop_pending_updates: options.dropPendingUpdates,
+            allowed_updates: options.allowedUpdates,
+            certificate: { source: options.webhook.tlsOptions!.cert as Buffer }
+          })
+    }
+})
 
 // Enable graceful stop
 process.once('SIGINT', () => {
