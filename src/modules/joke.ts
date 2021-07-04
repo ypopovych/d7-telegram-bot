@@ -1,10 +1,10 @@
 import { Telegraf } from "telegraf"
 import * as fs from "fs"
 import * as path from "path"
-import { Context, MatchedContext, MethodConfig, Storage, AsyncTaskRunner } from "../../types"
-import { Module } from "../../module"
-import { isBotCommand, ensureChatAdmin } from "../../utils/validators"
-import { getRandomIntInclusive } from "../../utils/random"
+import { Context, MatchedContext, MethodConfig, Storage, AsyncTaskRunner } from "../types"
+import { Module } from "../module"
+import { isBotCommand, ensureChatAdmin } from "../utils/validators"
+import { getRandomIntInclusive } from "../utils/random"
 
 
 type Joke = { month: number; month_text: string, year: number; release: string, joke: string }
@@ -24,7 +24,7 @@ export class JokeModule extends Module<JokeModuleConfig> {
 
     constructor(storage: Storage, taskRunner: AsyncTaskRunner, config: Partial<JokeModuleConfig>) {
         super(storage, taskRunner, config)
-        this.jokes = JSON.parse(fs.readFileSync(path.join(__dirname, "jokes.json"), {encoding: 'utf8'}))
+        this.jokes = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "..", "jokes.json"), {encoding: 'utf8'}))
     }
 
     private async command_tellJoke(ctx: MatchedContext<Context, 'text'>): Promise<void> {
