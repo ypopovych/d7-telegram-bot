@@ -7,7 +7,6 @@ import { BanModule } from "./ban"
 import { NukeModule } from "./nuke"
 import { RoVotingModule } from "./ro_voting"
 import { RoModule } from "./ro"
-import { delay } from "../utils/delay"
 
 const ALL_MODULES: ModuleFactory<any>[] = [
     AdminModule, AutoRoModule, BanModule, NukeModule, RoVotingModule, RoModule
@@ -37,15 +36,14 @@ async function command_help(commands: HelpModuleConfig[], ctx: MatchedContext<Co
         return lines.concat(entries)
     }, ["<b>Список команд:</b>", "<b>=================</b>"])
     lines.push("")
-    lines.push("<i>цей повідомлення буде видалено автоматично через 3 хвилини</i>")
+    lines.push("<i>це повідомлення буде видалено автоматично через 3 хвилини</i>")
     const message = await ctx.replyWithHTML(
         lines.join("\n"),
         {
             reply_to_message_id: ctx.message.message_id,
         }
     )
-    await delay(180000)
-    await ctx.deleteMessage(message.message_id)
+    ctx.taskRunner.once(180, () => ctx.deleteMessage(message.message_id))
 }
 
 export function registerModulesIn(bot: Telegraf<Context>, storage: Storage, configs: Record<string, any>) {

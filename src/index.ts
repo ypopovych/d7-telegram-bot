@@ -5,12 +5,16 @@ import * as modules from "./modules"
 import { Context } from "./types"
 import * as redis from './redis/async'
 import { RedisStorage } from "./redis/storage"
+import { DelayTaskRunner } from './utils/delay'
 
 // Reading config file
 const config = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "config.json"), { encoding: "utf8" }))
 
 // Creating bot instance
 const bot = new Telegraf<Context>(config.botToken)
+
+// Add task runner
+bot.context.taskRunner = new DelayTaskRunner()
 
 // Storage instance
 const storage = new RedisStorage(redis.createClient(config.redis.url), config.redis.options)
@@ -61,9 +65,18 @@ if (config.webHook && config.webHook.domain) {
     }
 }
 
+// Starting task runner
+bot.context.taskRunner?.start()
+
 // Launching bot
 bot.launch(options)
 
 // Enable graceful stop
-process.once('SIGINT', () => bot.stop('SIGINT'))
-process.once('SIGTERM', () => bot.stop('SIGTERM'))
+process.once('SIGINT', () => {
+    bot.context.taskRunner?.stop()
+    bot.stop('SIGINT')
+})
+process.once('SIGTERM', () => {
+    bot.context.taskRunner?.stop()
+    bot.stop('SIGTERM')
+})
