@@ -41,7 +41,10 @@ export class XkcdModule extends Module<XkcdModuleConfig> {
 
         try {
             const item = await req
-            await ctx.replyWithPhoto(item.img, {reply_to_message_id: ctx.message.message_id})
+            await ctx.replyWithPhoto(item.img, {
+                reply_to_message_id: ctx.message.message_id,
+                caption: "XKCD #" + item.num,
+            })
             await this.updateCooldown(ctx.chat.id)
         } catch {}
     }
