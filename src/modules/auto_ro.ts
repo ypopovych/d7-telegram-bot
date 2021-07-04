@@ -122,7 +122,7 @@ export class AutoRoModule extends Module<AutoRoModuleConfig> {
         const current = await this.storage.incValue(
             String(ctx.chat.id), this.moduleName(), this.NUMBER_OF_MESSAGES_KEY, 1
         )
-        return current >= count
+        return !ctx.message.from.is_bot && current >= count
     }
 
     private newNonMediaMessage(ctx: MatchedContext<Context, 'message'>): Promise<void> {

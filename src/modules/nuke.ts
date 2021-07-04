@@ -1,12 +1,14 @@
 import { Telegraf } from "telegraf"
 import { Context, MatchedContext, MethodConfig } from "../types"
 import { Module } from "../module"
-import { isBotCommand } from "../utils/validators"
+import { isBotCommand, ensureChatAdmin } from "../utils/validators"
 
 type NCityInfo = { id: string, bText: string, lText: string, lat: string, lng: string}
 
 export interface NukeModuleConfig {
     nuke_list: MethodConfig
+    nuke_cooldown: MethodConfig
+    nuke_set_cooldown: MethodConfig
     'nuke*': MethodConfig
 }
 
@@ -34,8 +36,12 @@ export class NukeModule extends Module<NukeModuleConfig> {
     readonly NUKE_COMMON_PARAMS = "casualties=1&fallout=1&ff=52&psi=20,5,1&zm=9"
     readonly NUKE_REGEX = new RegExp(/\/nuke_([a-zA-Z0-9_\-\.]+)/)
 
+    readonly COOLDOWN_KEY = "cooldown_seconds"
+    readonly LAST_MESSAGE_DATE_KEY = "last_message_date"
+
     private async command_nukeList(ctx: MatchedContext<Context, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.nuke_list)) return
+        if (!await this.ensureCooldown(ctx.chat.id)) return
     
         const botPart = ctx.chat.type == 'private' ? '' : '@' + ctx.botInfo.username
     
@@ -50,6 +56,7 @@ export class NukeModule extends Module<NukeModuleConfig> {
         if (!isBotCommand(ctx, this.config["nuke*"])) return next()
         const match = this.NUKE_REGEX.exec(ctx.message.text)
         if (!match) return await next()
+        if (!await this.ensureCooldown(ctx.chat.id)) return await next()
         const id = match[1]
         const city = this.NUKE_LIST.find(c => c.id == id)
         if (!city) return
@@ -63,27 +70,95 @@ export class NukeModule extends Module<NukeModuleConfig> {
             + '&' + this.NUKE_COMMON_PARAMS
             + '">ось</a> шо вийшло ' + text
         await ctx.replyWithHTML(reply, {reply_to_message_id: ctx.message.message_id})
+        await this.updateCooldown(ctx.chat.id)
+    }
+
+    private async command_setCooldown(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+        if (!isBotCommand(ctx, this.config.nuke_set_cooldown)) return
+        if (!await ensureChatAdmin(ctx, this.storage, ctx.message.from)) return
+    
+        const index = ctx.message.text.indexOf(ctx.botInfo.username) + ctx.botInfo.username.length
+        const substr = ctx.message.text.substring(index)
+        const number = parseInt(substr, 10)
+        
+        if (isNaN(number) || number < 0) {
+            await ctx.reply(
+                'Щось неправильно введено, спробуй ще раз, на цей раз цифрами',
+                { reply_to_message_id: ctx.message.message_id }
+            )
+            return
+        }
+    
+        await this.setCooldown(ctx.chat.id, number)
+    
+        await ctx.reply(
+            `Затримка між командами nuke_* тепер складає ${number} секунд`,
+            { reply_to_message_id: ctx.message.message_id }
+        )
+    }
+
+    private async command_getCooldown(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+        if (!isBotCommand(ctx, this.config.nuke_cooldown)) return
+    
+        const number = await this.getCooldown(ctx.chat.id)
+    
+        await ctx.reply(
+            `Затримка між командами nuke_* складає ${number} секунд`,
+            { reply_to_message_id: ctx.message.message_id }
+        )
     }
 
     static readonly defaultConfig: NukeModuleConfig = {
         nuke_list: { shortCall: false },
+        nuke_cooldown: { shortCall: false },
+        nuke_set_cooldown: { shortCall: false },
         'nuke*': { shortCall: false }
     }
 
     register(bot: Telegraf<Context>): void {
         bot.command("nuke_list", this.command_nukeList.bind(this))
+        bot.command("nuke_cooldown", this.command_getCooldown.bind(this))
+        bot.command("nuke_set_cooldown", this.command_setCooldown.bind(this))
         bot.on('text', this.event_onMessage.bind(this))
     }
 
     title(): string { return 'Бомбимо' }
     commands(): Record<string, string> {
+        const cmds: Record<string, string> = {
+            nuke_list: 'отримати список міст для бомбардування',
+            nuke_cooldown: 'вивести затримку команд nuke_*',
+            nuke_set_cooldown: 'встановити затримку команд nuke_*'
+        }
         return this.NUKE_LIST.reduce((list, city) => {
             list[`nuke_${city.id}`] = city.lText
             return list
-        }, {'nuke_list': 'отримати список міст для бомбардування'} as Record<string, string>)
+        }, cmds)
     }
 
     // Helpers
+    private getCooldown(chatId: number): Promise<number> {
+        return this.getConfigValue(chatId, this.COOLDOWN_KEY)
+    }
+
+    private setCooldown(chatId: number, seconds: number): Promise<void> {
+        return this.setConfigValue(chatId, this.COOLDOWN_KEY, seconds)
+    }
+
+    private async ensureCooldown(chatId: number): Promise<boolean> {
+        const cooldown = await this.getCooldown(chatId)
+        const lastMessage = await this.storage
+            .getValues(String(chatId), this.moduleName(), [this.LAST_MESSAGE_DATE_KEY])
+            .then((vals) => vals[0] ?? 0)
+        return (Date.now() - lastMessage) >= (cooldown * 1000)
+    }
+
+    private updateCooldown(chatId: number): Promise<void> {
+        return this.storage.setValues(
+            String(chatId), this.moduleName(),
+            { [this.LAST_MESSAGE_DATE_KEY]: Date.now() }
+        )
+    }
+
     private getBombSize() {
         return this.getRandomIntInclusive(1, 100000)
     }
