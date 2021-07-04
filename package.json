@@ -8,6 +8,7 @@
     "dev": "ts-node ./src/index.ts",
     "gen-config": "node ./dist/gen_config.js",
     "dev-gen-config": "ts-node ./src/gen_config.ts",
+    "upload": "npm run build && rsync -chavzP --exclude node_modules --exclude config.json dist package.json jokes.json",
     "build": "rm -rf ./dist && tsc"
   },
   "keywords": [
