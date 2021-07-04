@@ -43,7 +43,8 @@ async function command_help(commands: HelpModuleConfig[], ctx: MatchedContext<Co
             reply_to_message_id: ctx.message.message_id,
         }
     )
-    ctx.taskRunner.once(180, () => ctx.deleteMessage(message.message_id))
+    const chatId = ctx.chat.id, messageId = message.message_id, telegram = ctx.telegram
+    ctx.taskRunner.once(180, () => telegram.deleteMessage(chatId, messageId))
 }
 
 export function registerModulesIn(bot: Telegraf<Context>, storage: Storage, configs: Record<string, any>) {
