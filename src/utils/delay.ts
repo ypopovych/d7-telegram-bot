@@ -29,7 +29,7 @@ export class DelayTaskRunner {
     }
 
     once(wait: number, task: () => any) {
-        this.tasks.push({ startDate: Date.now() + wait, task })
+        this.tasks.push({ startDate: Date.now() + (wait * 1000), task })
     }
 }
 
