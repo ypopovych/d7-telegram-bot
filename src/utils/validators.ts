@@ -32,7 +32,7 @@ export function isGroupChat(chat: Chat): boolean {
 
 export async function isChatAdmin(telegram: Telegram, storage: Storage, chatId: string, userId: number): Promise<boolean> {
     const superadmins = await getSuperAdmins(telegram, storage, chatId)
-    return superadmins.indexOf(userId) >= 0
+    return superadmins.findIndex(adm => adm.userId == userId) >= 0
 }
 
 export async function ensureGroupChat(ctx: MatchedContext<Context, 'message'>): Promise<boolean> {

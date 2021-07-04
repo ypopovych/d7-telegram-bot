@@ -20,7 +20,10 @@ export class AdminModule extends Module<AdminModuleConfig> {
     
         const title = ctx.message.text.substring(ctx.message.text.indexOf(' ') + 1)
     
-        await this.makeAdmin(ctx, ctx.message.reply_to_message!.from!.id, title)
+        await this.makeAdmin(
+            ctx, ctx.message.reply_to_message!.from!.id,
+            ctx.message.reply_to_message!.from!.username, title
+        )
     
         await ctx.reply(
             `Користувачу ${ctx.message.reply_to_message!.from!.first_name} присвоєно плашку "${title}"`,
@@ -35,7 +38,10 @@ export class AdminModule extends Module<AdminModuleConfig> {
     
         const title = ctx.message.text.substring(ctx.message.text.indexOf(' ') + 1)
     
-        await this.makeSuperAdmin(ctx, ctx.message.reply_to_message!.from!.id, title)
+        await this.makeSuperAdmin(
+            ctx, ctx.message.reply_to_message!.from!.id, 
+            ctx.message.reply_to_message!.from!.username, title
+        )
     
         await ctx.reply(
             `Користувачу ${ctx.message.reply_to_message!.from!.first_name} присвоєно плашку "${title}"`,
@@ -74,12 +80,17 @@ export class AdminModule extends Module<AdminModuleConfig> {
     }
 
     // Helpers
-    private makeAdmin(ctx: MatchedContext<Context, 'text'>, userId: number, title: string): Promise<void> {
-        return setTitle(ctx.telegram, this.storage, String(ctx.chat.id), userId, title)
+    private makeAdmin(
+        ctx: MatchedContext<Context, 'text'>, userId: number, userName: string | undefined, title: string
+    ): Promise<void> {
+        return setTitle(ctx.telegram, this.storage, String(ctx.chat.id), userId, userName, title)
     }
 
-    private async makeSuperAdmin(ctx: MatchedContext<Context, 'text'>, userId: number, title: string): Promise<void> {
-        await this.makeAdmin(ctx, userId, title)
-        await addSuperAdmin(ctx.telegram, this.storage, String(ctx.chat.id), userId)
+    private async makeSuperAdmin(
+        ctx: MatchedContext<Context, 'text'>, userId: number,
+        userName: string | undefined , title: string
+    ): Promise<void> {
+        await this.makeAdmin(ctx, userId, userName, title)
+        await addSuperAdmin(ctx.telegram, this.storage, String(ctx.chat.id), userId, userName)
     }
 }
