@@ -78,7 +78,7 @@ export class RoVotingModule extends Module<RoVotingModuleConfig> {
         const pollData: PollData = {
             userName: name,
             userId: ctx.message.reply_to_message!.from!.id,
-            endDate: Date.now() + this.config.ro_24h_poll.pollTime,
+            endDate: Date.now() + (this.config.ro_24h_poll.pollTime * 1000),
             period: 86400,
             chatId: poll.chat.id,
             id: poll.poll.id,
