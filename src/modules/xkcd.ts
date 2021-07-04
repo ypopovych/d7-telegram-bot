@@ -41,9 +41,11 @@ export class XkcdModule extends Module<XkcdModuleConfig> {
 
         try {
             const item = await req
+            const explained_link = `https://www.explainxkcd.com/wiki/index.php/${item.num}`
             await ctx.replyWithPhoto(item.img, {
                 reply_to_message_id: ctx.message.message_id,
-                caption: "XKCD #" + item.num,
+                caption: `[XKCD \\#${item.num}](${explained_link})`,
+                parse_mode: "MarkdownV2"
             })
             await this.updateCooldown(ctx.chat.id)
         } catch {}
