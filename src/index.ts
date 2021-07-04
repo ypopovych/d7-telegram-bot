@@ -19,7 +19,12 @@ const storage = new RedisStorage(redis.createClient(config.redis.url), config.re
 modules.registerModulesIn(bot, storage, config.modules ?? {})
 
 // WebHook setup
-let options: Telegraf.LaunchOptions = {}
+let options: Telegraf.LaunchOptions = {
+    allowedUpdates: [
+        "message", "poll", "chat_member", "my_chat_member",
+        "poll_answer", "edited_message"
+    ]
+}
 if (config.webHook && config.webHook.domain) {
     options.webhook = {
         domain: config.webHook.domain,
