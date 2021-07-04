@@ -33,7 +33,7 @@ export class JokeModule extends Module<JokeModuleConfig> {
 
         const joke = this.jokes[getRandomIntInclusive(1, this.jokes.length) - 1]
 
-        const text = `${joke.joke}\n---\n${joke.release} ♦ ${joke.month_text} ${joke.year}`
+        const text = `${joke.joke}\n———\n${joke.release} ♦ ${joke.month_text} ${joke.year}`
 
         await ctx.reply(text, { reply_to_message_id: ctx.message.message_id })
         await this.updateCooldown(ctx.chat.id)
