@@ -8,9 +8,10 @@ import { NukeModule } from "./nuke"
 import { RoVotingModule } from "./ro_voting"
 import { RoModule } from "./ro"
 import { XkcdModule } from "./xkcd"
+import { JokeModule } from "./joke"
 
 const ALL_MODULES: ModuleFactory<any>[] = [
-    AdminModule, AutoRoModule, BanModule, NukeModule, RoVotingModule, RoModule, XkcdModule
+    AdminModule, AutoRoModule, BanModule, NukeModule, RoVotingModule, RoModule, XkcdModule, JokeModule
 ]
 
 const DEFAULT_HELP_CONFIG: HelpMethodConfig = {

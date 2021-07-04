@@ -2,6 +2,7 @@ import { Telegraf } from "telegraf"
 import { Context, MatchedContext, MethodConfig } from "../types"
 import { Module } from "../module"
 import { isBotCommand, ensureChatAdmin } from "../utils/validators"
+import { getRandomIntInclusive } from '../utils/random'
 
 type NCityInfo = { id: string, bText: string, lText: string, lat: string, lng: string}
 
@@ -61,7 +62,7 @@ export class NukeModule extends Module<NukeModuleConfig> {
         const city = this.NUKE_LIST.find(c => c.id == id)
         if (!city) return
         let airbust = "airburst=0&hob_ft=0", text = "(долетіло до Землі)", bomb = this.getBombSize()
-        if (this.getRandomIntInclusive(0, 1) == 1) {
+        if (getRandomIntInclusive(0, 1) == 1) {
             airbust = "hob_psi=5&hob_ft=47553"; text = "(йобнуло у повітрі)"
         }
         const reply = 'Знайшла у шухлядi бiмбу у '
@@ -160,7 +161,7 @@ export class NukeModule extends Module<NukeModuleConfig> {
     }
 
     private getBombSize() {
-        return this.getRandomIntInclusive(1, 100000)
+        return getRandomIntInclusive(1, 100000)
     }
     // private getBombSize() {
     //     const sizes = [
@@ -169,13 +170,7 @@ export class NukeModule extends Module<NukeModuleConfig> {
     //         100000
     //     ]
     //     let bomb_size = this.getRandomIntInclusive(0, sizes.length-1)
-    //     bomb_size = Math.round(this.getRandomIntInclusive(sizes[bomb_size]-sizes[bomb_size]*0.02, sizes[bomb_size]+sizes[bomb_size]*0.02))
+    //     bomb_size = Math.round(getRandomIntInclusive(sizes[bomb_size]-sizes[bomb_size]*0.02, sizes[bomb_size]+sizes[bomb_size]*0.02))
     //     return Math.min(bomb_size, 100000)
     // }
-    
-    private getRandomIntInclusive(min: number, max: number) {
-        min = Math.ceil(min)
-        max = Math.floor(max)
-        return Math.floor(Math.random() * (max - min + 1)) + min //Включаючи мінімум та максимум
-    }
 }

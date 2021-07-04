@@ -1,4 +1,5 @@
 import * as https from 'https'
+import { getRandomIntInclusive } from './random'
 
 export type XKCDItem = {
     day: string
@@ -49,12 +50,6 @@ export class XKCD {
     }
 
     random(): Promise<XKCDItem> {
-        return this.latest().then((item) => this.withId(this.getRandomIntInclusive(1, item.num)))
-    }
-
-    private getRandomIntInclusive(min: number, max: number) {
-        min = Math.ceil(min)
-        max = Math.floor(max)
-        return Math.floor(Math.random() * (max - min + 1)) + min
+        return this.latest().then((item) => this.withId(getRandomIntInclusive(1, item.num)))
     }
 }
