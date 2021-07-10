@@ -14,6 +14,7 @@ export function isMediaMessage(message: Message): { isMedia: boolean, mediaGroup
         || message.hasOwnProperty('animation')
         || message.hasOwnProperty('photo')
         || message.hasOwnProperty('video')
+        || message.hasOwnProperty('video_note')
     return { isMedia, mediaGroupId: null }
 }
 
