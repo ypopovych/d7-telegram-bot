@@ -5,16 +5,16 @@ import { getSuperAdmins } from "./superadmin"
 
 const BOT_USERNAME_REGEX = new RegExp(/\/([a-zA-Z0-9_\-\.]+)(@\S+)?/)
 
+const MEDIA_MESSAGE_PROPERTIES = ['dice', 'sticker', 'animation', 'photo', 'video', 'video_note', 'voice']
+
 export function isMediaMessage(message: Message): { isMedia: boolean, mediaGroupId: string | null } {
     if (message.hasOwnProperty('media_group_id')) {
         return { isMedia: true, mediaGroupId: (message as any).media_group_id }
     }
-    const isMedia = message.hasOwnProperty('dice')
-        || message.hasOwnProperty('sticker')
-        || message.hasOwnProperty('animation')
-        || message.hasOwnProperty('photo')
-        || message.hasOwnProperty('video')
-        || message.hasOwnProperty('video_note')
+    const isMedia = MEDIA_MESSAGE_PROPERTIES.reduce(
+        (prev, prop) => prev || message.hasOwnProperty(prop),
+        false
+    )
     return { isMedia, mediaGroupId: null }
 }
 
