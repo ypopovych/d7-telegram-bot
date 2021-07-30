@@ -69,6 +69,8 @@ export class BanModule extends Module<NullModule, Context, Config> {
         this.context.bot.command("unban", this.command_unban.bind(this))
     }
 
+    deinit(): void {}
+
     title(): string { return 'Банхаммер' }
     commands(): Record<string, string> {
         return {

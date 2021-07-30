@@ -131,6 +131,8 @@ export class NukeModule extends Module<NullModule, Context, Config> {
         this.context.bot.on('text', this.event_onMessage.bind(this))
     }
 
+    deinit(): void {}
+
     title(): string { return 'Бомбимо' }
     commands(): Record<string, string> {
         const cmds: Record<string, string> = {

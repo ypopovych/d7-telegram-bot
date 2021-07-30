@@ -134,6 +134,8 @@ export class RoVotingModule extends Module<NullModule, Context, Config> {
         this.context.bot.on('poll', this.event_onPoll.bind(this))
     }
 
+    deinit(): void {}
+
     title(): string { return 'Демократія' }
     commands(): Record<string, string> {
         return {

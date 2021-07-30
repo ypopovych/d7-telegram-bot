@@ -66,6 +66,8 @@ export class RoModule extends Module<NullModule, Context, Config> {
         this.context.bot.command("unro", this.command_unro.bind(this))
     }
 
+    deinit(): void {}
+
     title(): string { return 'Банхаммерчик' }
     commands(): Record<string, string> {
         return {

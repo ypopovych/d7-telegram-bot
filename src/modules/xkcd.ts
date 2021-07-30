@@ -105,6 +105,8 @@ export class XkcdModule extends Module<NullModule, Context, Config> {
         this.context.bot.command("xkcd_set_cooldown", this.command_setCooldown.bind(this))
     }
 
+    deinit(): void {}
+
     title(): string { return 'XKCD' }
     commands(): Record<string, string> {
         return {

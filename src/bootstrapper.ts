@@ -4,6 +4,7 @@ export interface IModule<Deps extends IModule<any> = any, Context extends {} = {
     readonly context: Context
 
     init(): void
+    deinit(): void
 }
 
 export interface IFactory<Deps extends IModule, Mod extends IModule<Deps, Context>, Context extends {}> {
@@ -12,7 +13,7 @@ export interface IFactory<Deps extends IModule, Mod extends IModule<Deps, Contex
 }
 
 export class Resolver<Modules extends IModule> {
-    readonly modules: Record<string, Modules> = {}
+    private modules: Record<string, Modules> = {}
 
     add<M extends Modules, D extends IModule>(mod: M, fact: IFactory<D, M, any>) {
         this.modules[fact.moduleName] = mod
@@ -29,6 +30,11 @@ export class Resolver<Modules extends IModule> {
     init() {
         for (const inst of this.all()) { inst.init() }
     }
+
+    deinit() {
+        for (const inst of this.all()) { inst.deinit() }
+        this.modules = {}
+    }
 }
 
 export class NullModule implements IModule<NullModule, {}> {
@@ -36,6 +42,7 @@ export class NullModule implements IModule<NullModule, {}> {
     readonly context!: {}
     readonly name = "NullModule"
     init() {}
+    deinit() {}
 }
 
 export class Bootstrapper<Modules extends IModule, Context extends {}> {

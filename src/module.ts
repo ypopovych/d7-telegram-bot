@@ -29,6 +29,7 @@ export abstract class Module<
   }
 
   abstract init(): void;
+  abstract deinit(): void;
 
   getConfigValue(chatId: number, key: string): Promise<any> {
     return this.storage.getConfigValue(String(chatId), this.name, key)
@@ -45,6 +46,7 @@ export abstract class Module<
 export class NullModule extends Module<any, ModuleContext, {}> {
   readonly name = "NullModule"
   init() {}
+  deinit() {}
   title() { return "" }
   commands() { return {} }
 }

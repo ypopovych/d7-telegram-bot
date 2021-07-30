@@ -76,6 +76,8 @@ export class AdminModule extends Module<NullModule, Context, Config> {
         this.context.bot.on("chat_member", this.event_onChatMember.bind(this))
     }
 
+    deinit(): void {}
+
     title(): string { return 'Адміни та Супер-Адміни' }
     commands(): Record<string, string> {
         return {

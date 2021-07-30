@@ -91,6 +91,8 @@ export class JokeModule extends Module<NullModule, Context, Config> {
         this.context.bot.command("tell_joke_set_cooldown", this.command_setCooldown.bind(this))
     }
 
+    deinit(): void {}
+
     title(): string { return 'Юморески' }
     commands(): Record<string, string> {
         return {

@@ -21,7 +21,8 @@ const taskRunner = new AsyncTaskRunner()
 const storage = new RedisStorage(redis.createClient(config.redis.url), config.redis.options)
 
 // Bootstraping and starting modules
-modules.MODULES.bootstrap({bot, storage, taskRunner, config}).init()
+const moduleResolver = modules.MODULES.bootstrap({bot, storage, taskRunner, config})
+moduleResolver.init()
 
 // WebHook setup
 let options: Telegraf.LaunchOptions = {
@@ -84,9 +85,11 @@ bot.launch(options).then(() => delay(1000)).then(() => {
 // Enable graceful stop
 process.once('SIGINT', () => {
     taskRunner.stop()
+    moduleResolver.deinit()
     bot.stop('SIGINT')
 })
 process.once('SIGTERM', () => {
     taskRunner.stop()
+    moduleResolver.deinit()
     bot.stop('SIGTERM')
 })

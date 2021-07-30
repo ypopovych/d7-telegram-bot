@@ -33,7 +33,9 @@ export class HelpModule extends Module<any, Context, Config> {
         }
     }
 
-    async command_help(ctx: MatchedContext<TelegrafContext, 'text'>) {
+    deinit(): void {}
+
+    private async command_help(ctx: MatchedContext<TelegrafContext, 'text'>) {
         if (!isBotCommand(ctx, this.config.help)) return
         if (!await this.ensureCooldown(ctx.chat.id)) return
         const timeout = this.config.help.timeout
