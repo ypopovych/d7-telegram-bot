@@ -1,33 +1,38 @@
 import { Telegraf } from "telegraf"
 import * as fs from "fs"
 import * as path from "path"
-import { Context, MatchedContext, MethodConfig, Storage, AsyncTaskRunner } from "../types"
-import { Module } from "../module"
+import { TelegrafContext, MatchedContext, MethodConfig } from "../types"
+import { Module, ModuleContext, NullModule } from "../module"
 import { isBotCommand, ensureChatAdmin } from "../utils/validators"
 import { getRandomIntInclusive } from "../utils/random"
-
+import { Resolver } from "../bootstrapper"
 
 type Joke = { month: number; month_text: string, year: number; release: string, joke: string }
 
-export interface JokeModuleConfig {
+export type Config = {
     tell_joke: MethodConfig
     tell_joke_cooldown: MethodConfig
     tell_joke_set_cooldown: MethodConfig
 }
 
-export class JokeModule extends Module<JokeModuleConfig> {
+export interface Context extends ModuleContext {
+    bot: Telegraf<TelegrafContext>
+}
+
+export class JokeModule extends Module<NullModule, Context, Config> {
+    readonly name = "joke"
     static readonly moduleName = "joke"
     private jokes: Joke[] 
 
     readonly COOLDOWN_KEY = "cooldown_seconds"
     readonly LAST_MESSAGE_DATE_KEY = "last_message_date"
 
-    constructor(storage: Storage, taskRunner: AsyncTaskRunner, config: Partial<JokeModuleConfig>) {
-        super(storage, taskRunner, config)
+    constructor(resolver: Resolver<NullModule>, context: Context) {
+        super(resolver, context)
         this.jokes = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "..", "jokes.json"), {encoding: 'utf8'}))
     }
 
-    private async command_tellJoke(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_tellJoke(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.tell_joke)) return
         if (!await this.ensureCooldown(ctx.chat.id)) return
 
@@ -39,7 +44,7 @@ export class JokeModule extends Module<JokeModuleConfig> {
         await this.updateCooldown(ctx.chat.id)
     }
 
-    private async command_setCooldown(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_setCooldown(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.tell_joke_set_cooldown)) return
         if (!await ensureChatAdmin(ctx, this.storage, ctx.message.from)) return
     
@@ -63,7 +68,7 @@ export class JokeModule extends Module<JokeModuleConfig> {
         )
     }
 
-    private async command_getCooldown(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_getCooldown(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.tell_joke_cooldown)) return
     
         const number = await this.getCooldown(ctx.chat.id)
@@ -74,16 +79,16 @@ export class JokeModule extends Module<JokeModuleConfig> {
         )
     }
 
-    static readonly defaultConfig: JokeModuleConfig = {
+    static readonly defaultConfig: Config = {
         tell_joke: { shortCall: false },
         tell_joke_cooldown: { shortCall: false },
         tell_joke_set_cooldown: { shortCall: false }
     }
 
-    register(bot: Telegraf<Context>): void {
-        bot.command("tell_joke", this.command_tellJoke.bind(this))
-        bot.command("tell_joke_cooldown", this.command_getCooldown.bind(this))
-        bot.command("tell_joke_set_cooldown", this.command_setCooldown.bind(this))
+    init(): void {
+        this.context.bot.command("tell_joke", this.command_tellJoke.bind(this))
+        this.context.bot.command("tell_joke_cooldown", this.command_getCooldown.bind(this))
+        this.context.bot.command("tell_joke_set_cooldown", this.command_setCooldown.bind(this))
     }
 
     title(): string { return 'Юморески' }
@@ -106,14 +111,14 @@ export class JokeModule extends Module<JokeModuleConfig> {
     private async ensureCooldown(chatId: number): Promise<boolean> {
         const cooldown = await this.getCooldown(chatId)
         const lastMessage = await this.storage
-            .getValues(String(chatId), this.moduleName(), [this.LAST_MESSAGE_DATE_KEY])
+            .getValues(String(chatId), this.name, [this.LAST_MESSAGE_DATE_KEY])
             .then((vals) => vals[0] ?? 0)
         return (Date.now() - lastMessage) >= (cooldown * 1000)
     }
 
     private updateCooldown(chatId: number): Promise<void> {
         return this.storage.setValues(
-            String(chatId), this.moduleName(),
+            String(chatId), this.name,
             { [this.LAST_MESSAGE_DATE_KEY]: Date.now() }
         )
     }

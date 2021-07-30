@@ -1,19 +1,24 @@
 import { Telegraf } from "telegraf"
-import { Context, MatchedContext, MethodConfig } from "../types"
-import { Module } from "../module"
+import { TelegrafContext, MatchedContext, MethodConfig } from "../types"
+import { Module, ModuleContext, NullModule } from "../module"
 import { isBotCommand, ensureChatAdmin } from "../utils/validators"
 import { getRandomIntInclusive } from '../utils/random'
 
 type NCityInfo = { id: string, bText: string, lText: string, lat: string, lng: string}
 
-export interface NukeModuleConfig {
+export type Config = {
     nuke_list: MethodConfig
     nuke_cooldown: MethodConfig
     nuke_set_cooldown: MethodConfig
     'nuke*': MethodConfig
 }
 
-export class NukeModule extends Module<NukeModuleConfig> {
+export interface Context extends ModuleContext {
+    bot: Telegraf<TelegrafContext>
+}
+
+export class NukeModule extends Module<NullModule, Context, Config> {
+    readonly name = "nuke"
     static readonly moduleName = "nuke"
 
     readonly NUKE_LIST: NCityInfo[] = [
@@ -42,7 +47,7 @@ export class NukeModule extends Module<NukeModuleConfig> {
     readonly COOLDOWN_KEY = "cooldown_seconds"
     readonly LAST_MESSAGE_DATE_KEY = "last_message_date"
 
-    private async command_nukeList(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_nukeList(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.nuke_list)) return
         if (!await this.ensureCooldown(ctx.chat.id)) return
     
@@ -55,7 +60,7 @@ export class NukeModule extends Module<NukeModuleConfig> {
         await ctx.replyWithHTML(lines.join('\n'), {reply_to_message_id: ctx.message.message_id})
     }
 
-    private async event_onMessage(ctx: MatchedContext<Context, 'text'>, next: () => Promise<void>): Promise<void> {
+    private async event_onMessage(ctx: MatchedContext<TelegrafContext, 'text'>, next: () => Promise<void>): Promise<void> {
         if (!isBotCommand(ctx, this.config["nuke*"])) return next()
         const match = this.NUKE_REGEX.exec(ctx.message.text)
         if (!match) return await next()
@@ -76,7 +81,7 @@ export class NukeModule extends Module<NukeModuleConfig> {
         await this.updateCooldown(ctx.chat.id)
     }
 
-    private async command_setCooldown(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_setCooldown(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.nuke_set_cooldown)) return
         if (!await ensureChatAdmin(ctx, this.storage, ctx.message.from)) return
     
@@ -100,7 +105,7 @@ export class NukeModule extends Module<NukeModuleConfig> {
         )
     }
 
-    private async command_getCooldown(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_getCooldown(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.nuke_cooldown)) return
     
         const number = await this.getCooldown(ctx.chat.id)
@@ -111,18 +116,18 @@ export class NukeModule extends Module<NukeModuleConfig> {
         )
     }
 
-    static readonly defaultConfig: NukeModuleConfig = {
+    static readonly defaultConfig: Config = {
         nuke_list: { shortCall: false },
         nuke_cooldown: { shortCall: false },
         nuke_set_cooldown: { shortCall: false },
         'nuke*': { shortCall: false }
     }
 
-    register(bot: Telegraf<Context>): void {
-        bot.command("nuke_list", this.command_nukeList.bind(this))
-        bot.command("nuke_cooldown", this.command_getCooldown.bind(this))
-        bot.command("nuke_set_cooldown", this.command_setCooldown.bind(this))
-        bot.on('text', this.event_onMessage.bind(this))
+    init(): void {
+        this.context.bot.command("nuke_list", this.command_nukeList.bind(this))
+        this.context.bot.command("nuke_cooldown", this.command_getCooldown.bind(this))
+        this.context.bot.command("nuke_set_cooldown", this.command_setCooldown.bind(this))
+        this.context.bot.on('text', this.event_onMessage.bind(this))
     }
 
     title(): string { return 'Бомбимо' }
@@ -150,14 +155,14 @@ export class NukeModule extends Module<NukeModuleConfig> {
     private async ensureCooldown(chatId: number): Promise<boolean> {
         const cooldown = await this.getCooldown(chatId)
         const lastMessage = await this.storage
-            .getValues(String(chatId), this.moduleName(), [this.LAST_MESSAGE_DATE_KEY])
+            .getValues(String(chatId), this.name, [this.LAST_MESSAGE_DATE_KEY])
             .then((vals) => vals[0] ?? 0)
         return (Date.now() - lastMessage) >= (cooldown * 1000)
     }
 
     private updateCooldown(chatId: number): Promise<void> {
         return this.storage.setValues(
-            String(chatId), this.moduleName(),
+            String(chatId), this.name,
             { [this.LAST_MESSAGE_DATE_KEY]: Date.now() }
         )
     }

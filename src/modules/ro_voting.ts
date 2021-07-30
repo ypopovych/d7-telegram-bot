@@ -1,6 +1,6 @@
 import { Telegraf, Telegram } from "telegraf"
-import { Context, MatchedContext, MethodConfig } from "../types"
-import { Module } from "../module"
+import { TelegrafContext, MatchedContext, MethodConfig } from "../types"
+import { Module, ModuleContext, NullModule } from "../module"
 import { ensureChatAdmin, ensureMessageCitation, isBotCommand } from "../utils/validators"
 import { getHoursString } from "../utils/string"
 import { enableRo } from "../utils/ro"
@@ -16,19 +16,24 @@ type PollData = {
     endDate: number
 }
 
-export interface RoVotingModuleConfig {
+export type Config = {
     number_of_votes: MethodConfig
     set_number_of_votes: MethodConfig
     ro_24h_poll: MethodConfig & { pollTime: number }
 }
 
-export class RoVotingModule extends Module<RoVotingModuleConfig> {
+export interface Context extends ModuleContext {
+    bot: Telegraf<TelegrafContext>
+}
+
+export class RoVotingModule extends Module<NullModule, Context, Config> {
+    readonly name = "ro_voting"
     static readonly moduleName = "ro_voting"
 
     readonly POLLS_COMMON_CHATID_KEY = "common_polls"
     readonly NUMBER_OF_VOTES_KEY = "number_of_votes"
 
-    private async command_setNumberOfVotes(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_setNumberOfVotes(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.set_number_of_votes)) return
         if (!await ensureChatAdmin(ctx, this.storage, ctx.message.from)) return
     
@@ -52,7 +57,7 @@ export class RoVotingModule extends Module<RoVotingModuleConfig> {
         )
     }
 
-    private async command_getNumberOfVotes(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_getNumberOfVotes(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.number_of_votes)) return
     
         const number = await this.getNumberOfVotes(ctx)
@@ -63,7 +68,7 @@ export class RoVotingModule extends Module<RoVotingModuleConfig> {
         )
     }
 
-    private async command_startRo24hPoll(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_startRo24hPoll(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.ro_24h_poll)) return
         if (!await ensureMessageCitation(ctx)) return
         const numberOfVotes = await this.getNumberOfVotes(ctx)
@@ -88,7 +93,7 @@ export class RoVotingModule extends Module<RoVotingModuleConfig> {
         await this.addPoll(poll.poll.id, pollData)
     }
 
-    private async event_onPoll(ctx: MatchedContext<Context, 'poll'>, next: () => Promise<void>): Promise<void> {
+    private async event_onPoll(ctx: MatchedContext<TelegrafContext, 'poll'>, next: () => Promise<void>): Promise<void> {
         const pollData = await this.getPoll(ctx.poll.id)
         if (!pollData) return await next()
         if (ctx.poll.is_closed) {
@@ -116,17 +121,17 @@ export class RoVotingModule extends Module<RoVotingModuleConfig> {
         }
     }
 
-    static readonly defaultConfig: RoVotingModuleConfig = {
+    static readonly defaultConfig: Config = {
         number_of_votes: { shortCall: false },
         set_number_of_votes: { shortCall: false },
         ro_24h_poll: { shortCall: false, pollTime: 86400 }
     }
 
-    register(bot: Telegraf<Context>): void {
-        bot.command("number_of_votes", this.command_getNumberOfVotes.bind(this))
-        bot.command("set_number_of_votes", this.command_setNumberOfVotes.bind(this))
-        bot.command("ro_24h_poll", this.command_startRo24hPoll.bind(this))
-        bot.on('poll', this.event_onPoll.bind(this))
+    init(): void {
+        this.context.bot.command("number_of_votes", this.command_getNumberOfVotes.bind(this))
+        this.context.bot.command("set_number_of_votes", this.command_setNumberOfVotes.bind(this))
+        this.context.bot.command("ro_24h_poll", this.command_startRo24hPoll.bind(this))
+        this.context.bot.on('poll', this.event_onPoll.bind(this))
     }
 
     title(): string { return 'Демократія' }
@@ -139,25 +144,25 @@ export class RoVotingModule extends Module<RoVotingModuleConfig> {
     }
 
     // Helpers
-    private getNumberOfVotes(ctx: MatchedContext<Context, 'message'>): Promise<number> {
+    private getNumberOfVotes(ctx: MatchedContext<TelegrafContext, 'message'>): Promise<number> {
         return this.getConfigValue(ctx.chat.id, this.NUMBER_OF_VOTES_KEY)
     }
     
-    private setNumberOfVotes(ctx: MatchedContext<Context, 'message'>, number: number): Promise<void> {
+    private setNumberOfVotes(ctx: MatchedContext<TelegrafContext, 'message'>, number: number): Promise<void> {
         return this.setConfigValue(ctx.chat.id, this.NUMBER_OF_VOTES_KEY, number)
     }
 
     private addPoll(pollId: string, data: PollData): Promise<void> {
-        return this.storage.setValues(this.POLLS_COMMON_CHATID_KEY, this.moduleName(), { [pollId]: data })
+        return this.storage.setValues(this.POLLS_COMMON_CHATID_KEY, this.name, { [pollId]: data })
     }
     
     private getPoll(pollId: string): Promise<PollData | undefined> {
-        return this.storage.getValues(this.POLLS_COMMON_CHATID_KEY, this.moduleName(), [pollId])
+        return this.storage.getValues(this.POLLS_COMMON_CHATID_KEY, this.name, [pollId])
             .then(vals => vals[0])
     }
     
     private removePoll(pollId: string): Promise<void> {
-        return this.storage.removeValues(this.POLLS_COMMON_CHATID_KEY, this.moduleName(), [pollId])
+        return this.storage.removeValues(this.POLLS_COMMON_CHATID_KEY, this.name, [pollId])
     }
     
     private stopPoll(telegram: Telegram, chatId: number, messageId: number): Promise<void> {

@@ -1,28 +1,34 @@
 import { Telegraf } from "telegraf"
-import { Context, MatchedContext, MethodConfig, Storage, AsyncTaskRunner } from "../types"
-import { Module } from "../module"
+import { TelegrafContext, MatchedContext, MethodConfig } from "../types"
+import { Module, ModuleContext, NullModule } from "../module"
 import { XKCD, XKCDItem } from "../utils/xkcd"
 import { isBotCommand, ensureChatAdmin } from "../utils/validators"
+import { Resolver} from "../bootstrapper"
 
-export interface XkcdModuleConfig {
+export type Config = {
     xkcd: MethodConfig
     xkcd_cooldown: MethodConfig
     xkcd_set_cooldown: MethodConfig
 }
 
-export class XkcdModule extends Module<XkcdModuleConfig> {
+export interface Context extends ModuleContext {
+    bot: Telegraf<TelegrafContext>
+}
+
+export class XkcdModule extends Module<NullModule, Context, Config> {
+    readonly name = "xkcd"
     static readonly moduleName = "xkcd"
     private xkcd: XKCD
 
     readonly COOLDOWN_KEY = "cooldown_seconds"
     readonly LAST_MESSAGE_DATE_KEY = "last_message_date"
 
-    constructor(storage: Storage, taskRunner: AsyncTaskRunner, config: Partial<XkcdModuleConfig>) {
-        super(storage, taskRunner, config)
+    constructor(resolver: Resolver<NullModule>, context: Context) {
+        super(resolver, context)
         this.xkcd = new XKCD()
     }
 
-    private async command_xkcd(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_xkcd(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.xkcd)) return
         if (!await this.ensureCooldown(ctx.chat.id)) return
   
@@ -51,7 +57,7 @@ export class XkcdModule extends Module<XkcdModuleConfig> {
         } catch {}
     }
 
-    private async command_setCooldown(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_setCooldown(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.xkcd_set_cooldown)) return
         if (!await ensureChatAdmin(ctx, this.storage, ctx.message.from)) return
     
@@ -75,7 +81,7 @@ export class XkcdModule extends Module<XkcdModuleConfig> {
         )
     }
 
-    private async command_getCooldown(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_getCooldown(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.xkcd_cooldown)) return
     
         const number = await this.getCooldown(ctx.chat.id)
@@ -86,16 +92,16 @@ export class XkcdModule extends Module<XkcdModuleConfig> {
         )
     }
 
-    static readonly defaultConfig: XkcdModuleConfig = {
+    static readonly defaultConfig: Config = {
         xkcd: { shortCall: false },
         xkcd_cooldown: { shortCall: false },
         xkcd_set_cooldown: { shortCall: false }
     }
 
-    register(bot: Telegraf<Context>): void {
-        bot.command("xkcd", this.command_xkcd.bind(this))
-        bot.command("xkcd_cooldown", this.command_getCooldown.bind(this))
-        bot.command("xkcd_set_cooldown", this.command_setCooldown.bind(this))
+    init(): void {
+        this.context.bot.command("xkcd", this.command_xkcd.bind(this))
+        this.context.bot.command("xkcd_cooldown", this.command_getCooldown.bind(this))
+        this.context.bot.command("xkcd_set_cooldown", this.command_setCooldown.bind(this))
     }
 
     title(): string { return 'XKCD' }
@@ -118,14 +124,14 @@ export class XkcdModule extends Module<XkcdModuleConfig> {
     private async ensureCooldown(chatId: number): Promise<boolean> {
         const cooldown = await this.getCooldown(chatId)
         const lastMessage = await this.storage
-            .getValues(String(chatId), this.moduleName(), [this.LAST_MESSAGE_DATE_KEY])
+            .getValues(String(chatId), this.name, [this.LAST_MESSAGE_DATE_KEY])
             .then((vals) => vals[0] ?? 0)
         return (Date.now() - lastMessage) >= (cooldown * 1000)
     }
 
     private updateCooldown(chatId: number): Promise<void> {
         return this.storage.setValues(
-            String(chatId), this.moduleName(),
+            String(chatId), this.name,
             { [this.LAST_MESSAGE_DATE_KEY]: Date.now() }
         )
     }

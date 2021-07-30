@@ -1,19 +1,24 @@
 import { Telegraf } from "telegraf"
-import { Context, MatchedContext, MethodConfig } from "../types"
-import { Module } from "../module"
+import { TelegrafContext, MatchedContext, MethodConfig } from "../types"
+import { Module, ModuleContext, NullModule } from "../module"
 import { isBotCommand, ensureChatAdmin, ensureMessageCitation } from "../utils/validators"
 import { banUser, unbanUser } from "../utils/ban"
 
-export interface BanModuleConfig {
+export type Config = {
     ban: MethodConfig
     ban_24h: MethodConfig
     unban: MethodConfig
 }
 
-export class BanModule extends Module<BanModuleConfig> {
+export interface Context extends ModuleContext {
+    bot: Telegraf<TelegrafContext>
+}
+
+export class BanModule extends Module<NullModule, Context, Config> {
+    readonly name = "ban"
     static readonly moduleName = "ban"
 
-    private async command_ban(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_ban(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.ban)) return
         if (!await ensureChatAdmin(ctx, this.storage, ctx.from)) return
         if (!await ensureMessageCitation(ctx)) return
@@ -26,7 +31,7 @@ export class BanModule extends Module<BanModuleConfig> {
         )
     }
 
-    private async command_ban_24h(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_ban_24h(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.ban_24h)) return
         if (!await ensureChatAdmin(ctx, this.storage, ctx.from)) return
         if (!await ensureMessageCitation(ctx)) return
@@ -39,7 +44,7 @@ export class BanModule extends Module<BanModuleConfig> {
         )
     }
 
-    private async command_unban(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_unban(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.unban)) return
         if (!await ensureChatAdmin(ctx, this.storage, ctx.from)) return
         if (!await ensureMessageCitation(ctx)) return
@@ -52,16 +57,16 @@ export class BanModule extends Module<BanModuleConfig> {
         )
     }
 
-    static readonly defaultConfig: BanModuleConfig = {
+    static readonly defaultConfig: Config = {
         ban: { shortCall: false },
         ban_24h: { shortCall: false },
         unban: { shortCall: false }
     }
 
-    register(bot: Telegraf<Context>): void {
-        bot.command("ban", this.command_ban.bind(this))
-        bot.command("ban_24h", this.command_ban_24h.bind(this))
-        bot.command("unban", this.command_unban.bind(this))
+    init(): void {
+        this.context.bot.command("ban", this.command_ban.bind(this))
+        this.context.bot.command("ban_24h", this.command_ban_24h.bind(this))
+        this.context.bot.command("unban", this.command_unban.bind(this))
     }
 
     title(): string { return 'Банхаммер' }

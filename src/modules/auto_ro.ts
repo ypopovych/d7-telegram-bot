@@ -1,21 +1,26 @@
 import { Telegraf } from "telegraf"
-import { Context, MatchedContext, MethodConfig } from "../types"
-import { Module } from "../module"
+import { TelegrafContext, MatchedContext, MethodConfig } from "../types"
+import { Module, ModuleContext, NullModule } from "../module"
 import { enableRo } from "../utils/ro"
 import { ensureChatAdmin, isMediaMessage, isBotCommand } from "../utils/validators"
 
-export interface AutoRoModuleConfig {
+export type Config = {
     auto_ro_message_count: MethodConfig
     set_auto_ro_message_count: MethodConfig
 }
 
-export class AutoRoModule extends Module<AutoRoModuleConfig> {
+export interface Context extends ModuleContext {
+    bot: Telegraf<TelegrafContext>
+}
+
+export class AutoRoModule extends Module<NullModule, Context, Config> {
+    readonly name = "auto_ro"
     static readonly moduleName = "auto_ro"
 
     private readonly NUMBER_OF_MESSAGES_KEY = "number_of_messages"
     private readonly MEDIA_GROUP_ID_KEY = "media_group_id"
 
-    private async command_setNumberOfMessages(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_setNumberOfMessages(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.set_auto_ro_message_count)) return
         if (!await ensureChatAdmin(ctx, this.storage, ctx.message.from)) return
     
@@ -43,7 +48,7 @@ export class AutoRoModule extends Module<AutoRoModuleConfig> {
         )
     }
 
-    private async command_getNumberOfMessages(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_getNumberOfMessages(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.auto_ro_message_count)) return
     
         const number = await this.getNumberOfMessages(ctx)
@@ -58,7 +63,7 @@ export class AutoRoModule extends Module<AutoRoModuleConfig> {
         )
     }
 
-    private async event_onMessage(ctx: MatchedContext<Context, 'message'>, next: () => Promise<void>): Promise<void> {
+    private async event_onMessage(ctx: MatchedContext<TelegrafContext, 'message'>, next: () => Promise<void>): Promise<void> {
         const count = await this.getNumberOfMessages(ctx)
         if (count > 0) {
             const { isMedia, mediaGroupId } = isMediaMessage(ctx.message)
@@ -78,15 +83,15 @@ export class AutoRoModule extends Module<AutoRoModuleConfig> {
         await next()
     }
 
-    static readonly defaultConfig: AutoRoModuleConfig = {
+    static readonly defaultConfig: Config = {
         auto_ro_message_count: { shortCall: false },
         set_auto_ro_message_count: { shortCall: false }
     }
 
-    register(bot: Telegraf<Context>): void {
-        bot.command("auto_ro_message_count", this.command_getNumberOfMessages.bind(this))
-        bot.command("set_auto_ro_message_count", this.command_setNumberOfMessages.bind(this))
-        bot.on('message', this.event_onMessage.bind(this))
+    init(): void {
+        this.context.bot.command("auto_ro_message_count", this.command_getNumberOfMessages.bind(this))
+        this.context.bot.command("set_auto_ro_message_count", this.command_setNumberOfMessages.bind(this))
+        this.context.bot.on('message', this.event_onMessage.bind(this))
     }
 
     title(): string { return 'АвтоРО' }
@@ -98,20 +103,20 @@ export class AutoRoModule extends Module<AutoRoModuleConfig> {
     }
 
     // Helpers
-    private getNumberOfMessages(ctx: MatchedContext<Context, 'message'>): Promise<number> {
+    private getNumberOfMessages(ctx: MatchedContext<TelegrafContext, 'message'>): Promise<number> {
         return this.getConfigValue(ctx.chat.id, this.NUMBER_OF_MESSAGES_KEY)
     }
     
-    private setNumberOfMessages(ctx: MatchedContext<Context, 'message'>, number: number): Promise<void> {
+    private setNumberOfMessages(ctx: MatchedContext<TelegrafContext, 'message'>, number: number): Promise<void> {
         return this.setConfigValue(ctx.chat.id, this.NUMBER_OF_MESSAGES_KEY, number)
     }
 
     private async newMediaMessage(
-        ctx: MatchedContext<Context, 'message'>, mediaGroupId: string, count: number
+        ctx: MatchedContext<TelegrafContext, 'message'>, mediaGroupId: string, count: number
     ): Promise<boolean> {
         const groupId = await this.storage
             .updateValues(
-                String(ctx.chat.id), this.moduleName(),
+                String(ctx.chat.id), this.name,
                 {[this.MEDIA_GROUP_ID_KEY]: mediaGroupId}
             )
             .then(groups => groups[this.MEDIA_GROUP_ID_KEY] ?? '')
@@ -119,14 +124,14 @@ export class AutoRoModule extends Module<AutoRoModuleConfig> {
             return false
         }
         const current = await this.storage.incValue(
-            String(ctx.chat.id), this.moduleName(), this.NUMBER_OF_MESSAGES_KEY, 1
+            String(ctx.chat.id), this.name, this.NUMBER_OF_MESSAGES_KEY, 1
         )
         return !ctx.message.from.is_bot && current >= count
     }
 
-    private newNonMediaMessage(ctx: MatchedContext<Context, 'message'>): Promise<void> {
+    private newNonMediaMessage(ctx: MatchedContext<TelegrafContext, 'message'>): Promise<void> {
         return this.storage.removeValues(
-            String(ctx.chat.id), this.moduleName(),
+            String(ctx.chat.id), this.name,
             [this.NUMBER_OF_MESSAGES_KEY, this.MEDIA_GROUP_ID_KEY]
         )
     }

@@ -1,19 +1,24 @@
 import { Telegraf } from "telegraf"
-import { Context, MatchedContext, MethodConfig } from "../types"
-import { Module } from "../module"
+import { TelegrafContext, MatchedContext, MethodConfig } from "../types"
+import { Module, ModuleContext, NullModule } from "../module"
 import { isBotCommand, ensureChatAdmin, ensureMessageCitation } from "../utils/validators"
 import { disableRo, enableRo } from "../utils/ro"
 
-export interface RoModuleConfig {
+export type Config = {
     ro_24h: MethodConfig
     ro_7d: MethodConfig
     unro: MethodConfig
 }
 
-export class RoModule extends Module<RoModuleConfig> {
+export interface Context extends ModuleContext {
+    bot: Telegraf<TelegrafContext>
+}
+
+export class RoModule extends Module<NullModule, Context, Config> {
+    readonly name = "ro"
     static readonly moduleName = "ro"
 
-    private async command_ro_24h(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_ro_24h(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.ro_24h)) return
         if (!await ensureChatAdmin(ctx, this.storage, ctx.from)) return
         if (!await ensureMessageCitation(ctx)) return
@@ -25,7 +30,7 @@ export class RoModule extends Module<RoModuleConfig> {
         )
     }
 
-    private async command_ro_7d(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_ro_7d(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.ro_7d)) return
         if (!await ensureChatAdmin(ctx, this.storage, ctx.from)) return
         if (!await ensureMessageCitation(ctx)) return
@@ -37,7 +42,7 @@ export class RoModule extends Module<RoModuleConfig> {
         )
     }
 
-    private async command_unro(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_unro(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.unro)) return
         if (!await ensureChatAdmin(ctx, this.storage, ctx.from)) return
         if (!await ensureMessageCitation(ctx)) return
@@ -49,16 +54,16 @@ export class RoModule extends Module<RoModuleConfig> {
         )
     }
 
-    static readonly defaultConfig: RoModuleConfig = {
+    static readonly defaultConfig: Config = {
         ro_24h: { shortCall: false },
         ro_7d: { shortCall: false },
         unro: { shortCall: false }
     }
 
-    register(bot: Telegraf<Context>): void {
-        bot.command("ro_24h", this.command_ro_24h.bind(this))
-        bot.command("ro_7d", this.command_ro_7d.bind(this))
-        bot.command("unro", this.command_unro.bind(this))
+    init(): void {
+        this.context.bot.command("ro_24h", this.command_ro_24h.bind(this))
+        this.context.bot.command("ro_7d", this.command_ro_7d.bind(this))
+        this.context.bot.command("unro", this.command_unro.bind(this))
     }
 
     title(): string { return 'Банхаммерчик' }

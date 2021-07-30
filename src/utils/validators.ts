@@ -1,6 +1,6 @@
 import { Telegram } from "telegraf"
 import { User, Chat, Message } from "typegram"
-import { Context, MatchedContext, MethodConfig, Storage } from "../types"
+import { TelegrafContext as Context, MatchedContext, MethodConfig, Storage } from "../types"
 import { getSuperAdmins } from "./superadmin"
 
 const BOT_USERNAME_REGEX = new RegExp(/\/([a-zA-Z0-9_\-\.]+)(@\S+)?/)

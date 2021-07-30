@@ -2,16 +2,17 @@ import { Telegraf } from "telegraf"
 import * as fs from 'fs'
 import * as path from 'path'
 import * as modules from "./modules"
-import { Context } from "./types"
+import { TelegrafContext } from "./types"
 import * as redis from './redis/async'
 import { RedisStorage } from "./redis/storage"
 import { AsyncTaskRunner, delay } from './utils/delay'
+import { Configuration } from "./config"
 
 // Reading config file
-const config = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "config.json"), { encoding: "utf8" }))
+const config = new Configuration(path.join(__dirname, "..", "config.json"))
 
 // Creating bot instance
-const bot = new Telegraf<Context>(config.botToken)
+const bot = new Telegraf<TelegrafContext>(config.botToken)
 
 // Add task runner
 const taskRunner = new AsyncTaskRunner()
@@ -19,8 +20,8 @@ const taskRunner = new AsyncTaskRunner()
 // Storage instance
 const storage = new RedisStorage(redis.createClient(config.redis.url), config.redis.options)
 
-// Registering bot modules
-modules.registerModulesIn(bot, storage, taskRunner, config.modules ?? {})
+// Bootstraping and starting modules
+modules.MODULES.bootstrap({bot, storage, taskRunner, config}).init()
 
 // WebHook setup
 let options: Telegraf.LaunchOptions = {
@@ -30,13 +31,13 @@ let options: Telegraf.LaunchOptions = {
     ]
 }
 
-if (config.webHook && config.webHook.domain) {
+if (config.webHook) {
     options.webhook = {
         domain: config.webHook.domain,
-        port: config.webHook.port ?? 443,
-        host: config.webHook.host ?? "0.0.0.0"
+        port: config.webHook.port,
+        host: config.webHook.host
     }
-    if (config.webHook.pathPrefix && config.webHook.pathPrefix != "") {
+    if (config.webHook.pathPrefix) {
         options.webhook.hookPath = config.webHook.pathPrefix + "/" + bot.secretPathComponent()
     }
     if (config.webHook.tls) {
@@ -71,7 +72,7 @@ taskRunner.start()
 
 // Launching bot
 bot.launch(options).then(() => delay(1000)).then(() => {
-    if (options.webhook && config.webHook.tls && config.webHook.tls.selfSigned) {
+    if (options.webhook && config.webHook && config.webHook.tls?.selfSigned) {
         bot.telegram.setWebhook(`${options.webhook.domain}${options.webhook.hookPath}`, {
             drop_pending_updates: options.dropPendingUpdates,
             allowed_updates: options.allowedUpdates,

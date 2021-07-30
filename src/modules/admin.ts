@@ -1,19 +1,24 @@
 import { Telegraf } from "telegraf"
-import { Context, MatchedContext, MethodConfig } from "../types"
-import { Module } from "../module"
+import { TelegrafContext, MatchedContext, MethodConfig } from "../types"
+import { Module, ModuleContext, NullModule } from "../module"
 import { isBotCommand, ensureChatAdmin, ensureMessageCitation } from "../utils/validators"
 import { addSuperAdmin } from "../utils/superadmin"
 import { setTitle, restoreTitle } from "../utils/title"
 
-export interface AdminModuleConfig {
+export type Config = {
     admin: MethodConfig
     superadmin: MethodConfig
 }
 
-export class AdminModule extends Module<AdminModuleConfig> {
+export interface Context extends ModuleContext {
+    bot: Telegraf<TelegrafContext>
+}
+
+export class AdminModule extends Module<NullModule, Context, Config> {
+    readonly name = "admin"
     static readonly moduleName = "admin"
 
-    private async command_admin(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_admin(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.admin)) return
         if (!await ensureChatAdmin(ctx, this.storage, ctx.from)) return
         if (!await ensureMessageCitation(ctx)) return
@@ -31,7 +36,7 @@ export class AdminModule extends Module<AdminModuleConfig> {
         )
     }
 
-    private async command_superadmin(ctx: MatchedContext<Context, 'text'>): Promise<void> {
+    private async command_superadmin(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.superadmin)) return
         if (!await ensureChatAdmin(ctx, this.storage, ctx.from)) return
         if (!await ensureMessageCitation(ctx)) return
@@ -49,7 +54,7 @@ export class AdminModule extends Module<AdminModuleConfig> {
         )
     }
 
-    private async event_onChatMember(ctx: MatchedContext<Context, 'chat_member'>, next: () => Promise<void>) {
+    private async event_onChatMember(ctx: MatchedContext<TelegrafContext, 'chat_member'>, next: () => Promise<void>) {
         // Restores title if user was banned / set to RO
         if (
             ["kicked", "left", "restricted"].includes(ctx.chatMember.old_chat_member.status) 
@@ -60,15 +65,15 @@ export class AdminModule extends Module<AdminModuleConfig> {
         await next()
     }
 
-    static readonly defaultConfig: AdminModuleConfig = { 
+    static readonly defaultConfig: Config = { 
         admin: { shortCall: false },
         superadmin: { shortCall: false }
     }
-
-    register(bot: Telegraf<Context>): void {
-        bot.command("admin", this.command_admin.bind(this))
-        bot.command("superadmin", this.command_superadmin.bind(this))
-        bot.on("chat_member", this.event_onChatMember.bind(this))
+    
+    init(): void {
+        this.context.bot.command("admin", this.command_admin.bind(this))
+        this.context.bot.command("superadmin", this.command_superadmin.bind(this))
+        this.context.bot.on("chat_member", this.event_onChatMember.bind(this))
     }
 
     title(): string { return 'Адміни та Супер-Адміни' }
@@ -81,13 +86,13 @@ export class AdminModule extends Module<AdminModuleConfig> {
 
     // Helpers
     private makeAdmin(
-        ctx: MatchedContext<Context, 'text'>, userId: number, userName: string | undefined, title: string
+        ctx: MatchedContext<TelegrafContext, 'text'>, userId: number, userName: string | undefined, title: string
     ): Promise<void> {
         return setTitle(ctx.telegram, this.storage, String(ctx.chat.id), userId, userName, title)
     }
 
     private async makeSuperAdmin(
-        ctx: MatchedContext<Context, 'text'>, userId: number,
+        ctx: MatchedContext<TelegrafContext, 'text'>, userId: number,
         userName: string | undefined , title: string
     ): Promise<void> {
         await this.makeAdmin(ctx, userId, userName, title)

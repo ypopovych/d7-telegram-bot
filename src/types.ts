@@ -18,7 +18,7 @@ export interface AsyncTaskRunner {
     cancel(taskId: symbol): void
 }
 
-export interface Context extends BContext {}
+export interface TelegrafContext extends BContext {}
 
 export type MatchedContext<
   C extends BContext,
