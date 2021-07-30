@@ -3,6 +3,7 @@ import { TelegrafContext, MatchedContext, MethodConfig } from "../types"
 import { Module, ModuleContext, NullModule } from "../module"
 import { isBotCommand, ensureChatAdmin } from "../utils/validators"
 import { getRandomIntInclusive } from '../utils/random'
+import { getSecondsString } from '../utils/string'
 
 type NCityInfo = { id: string, bText: string, lText: string, lat: string, lng: string}
 
@@ -100,7 +101,7 @@ export class NukeModule extends Module<NullModule, Context, Config> {
         await this.setCooldown(ctx.chat.id, number)
     
         await ctx.reply(
-            `Затримка між командами nuke_* тепер складає ${number} секунд`,
+            `Затримка між командами nuke_* тепер складає ${getSecondsString(number)}`,
             { reply_to_message_id: ctx.message.message_id }
         )
     }
@@ -111,7 +112,7 @@ export class NukeModule extends Module<NullModule, Context, Config> {
         const number = await this.getCooldown(ctx.chat.id)
     
         await ctx.reply(
-            `Затримка між командами nuke_* складає ${number} секунд`,
+            `Затримка між командами nuke_* складає ${getSecondsString(number)}`,
             { reply_to_message_id: ctx.message.message_id }
         )
     }

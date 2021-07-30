@@ -3,6 +3,7 @@ import { TelegrafContext, MatchedContext, MethodConfig } from "../types"
 import { Module, ModuleContext, NullModule } from "../module"
 import { XKCD, XKCDItem } from "../utils/xkcd"
 import { isBotCommand, ensureChatAdmin } from "../utils/validators"
+import { getSecondsString } from '../utils/string'
 import { Resolver} from "../bootstrapper"
 
 export type Config = {
@@ -76,7 +77,7 @@ export class XkcdModule extends Module<NullModule, Context, Config> {
         await this.setCooldown(ctx.chat.id, number)
     
         await ctx.reply(
-            `Затримка між командами xkcd тепер складає ${number} секунд`,
+            `Затримка між командами xkcd тепер складає ${getSecondsString(number)}`,
             { reply_to_message_id: ctx.message.message_id }
         )
     }
@@ -87,7 +88,7 @@ export class XkcdModule extends Module<NullModule, Context, Config> {
         const number = await this.getCooldown(ctx.chat.id)
     
         await ctx.reply(
-            `Затримка між командами xkcd складає ${number} секунд`,
+            `Затримка між командами xkcd складає ${getSecondsString(number)}`,
             { reply_to_message_id: ctx.message.message_id }
         )
     }
