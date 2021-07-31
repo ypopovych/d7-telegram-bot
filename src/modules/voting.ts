@@ -148,7 +148,7 @@ export class VotingModule extends Module<NullModule, Context, Config> {
                     line += voters.reduce((acc, vote) => {
                         const name = vote.username
                             ? `<i>${vote.name}</i>(@${vote.username})`
-                            : `<i>vote.name</i>`
+                            : `<i>${vote.name}</i>`
                         return acc.concat(name)
                     }, [] as string[]).join(", ")
                 }
