@@ -85,6 +85,7 @@ export class VotingModule extends Module<NullModule, Context, Config> {
 
         const message = await this.context.bot.telegram.sendMessage(chatId, poll.message, {
             parse_mode: "HTML",
+            disable_notification: true,
             ...this.inlineKeyboard(poll.options, pollId)
         })
 
@@ -109,16 +110,7 @@ export class VotingModule extends Module<NullModule, Context, Config> {
         const data = await this.getPoll(chatId, pollId)
         if (!data) return
         await this.removePoll(chatId, pollId, data.poll.options.length)
-        const pendingUpdate = this.getEditMessageUpdate(chatId, data.messageId)
-        if (pendingUpdate) {
-            pendingUpdate.keyboard = Markup.inlineKeyboard([])
-            this.addEditMessageUpdate(pendingUpdate)
-        } else {
-            this.addEditMessageUpdate({
-                chatId, messageId: data.messageId,
-                keyboard: Markup.inlineKeyboard([])
-            })
-        }
+        this.addStopMessageUpdate(chatId, data.messageId)
     }
 
     private async event_onCallbackQuery(ctx: MatchedContext<TelegrafContext, 'callback_query'>, next: () => Promise<void>): Promise<void> {
@@ -159,17 +151,19 @@ export class VotingModule extends Module<NullModule, Context, Config> {
         const poll = await this.getPoll(chatId, pollId)
         if (!poll) {
             await ctx.answerCbQuery('Помилка! Голосування не існує')
+            this.addStopMessageUpdate(chatId, query.message!.message_id)
             return
         }
 
         if (poll.endDate <= Date.now()) {
-            await this.stopPoll(chatId, pollId)
             await ctx.answerCbQuery('Помилка! Голосування вже закінчилось')
+            await this.stopPoll(chatId, pollId)
             return
         }
 
         if (!this.handlers[poll.module+":"+poll.poll.type]) {
             await ctx.answerCbQuery('Помилка! Невідомий вид голосування')
+            await this.stopPoll(chatId, pollId)
             return
         }
 
@@ -215,17 +209,19 @@ export class VotingModule extends Module<NullModule, Context, Config> {
         const poll = await this.getPoll(chatId, pollId)
         if (!poll) {
             await ctx.answerCbQuery('Помилка! Голосування не існує')
+            this.addStopMessageUpdate(chatId, query.message!.message_id)
             return
         }
 
         if (poll.endDate <= Date.now()) {
-            await this.stopPoll(chatId, pollId)
             await ctx.answerCbQuery('Помилка! Голосування вже закінчилось')
+            await this.stopPoll(chatId, pollId)
             return
         }
 
         if (!this.handlers[poll.module+":"+poll.poll.type]) {
             await ctx.answerCbQuery('Помилка! Невідомий вид голосування')
+            await this.stopPoll(chatId, pollId)
             return
         }
 
@@ -243,6 +239,7 @@ export class VotingModule extends Module<NullModule, Context, Config> {
 
         const message = await this.context.bot.telegram.sendMessage(chatId, results, {
             parse_mode: "HTML",
+            disable_notification: true,
             ...this.inlineKeyboard(poll.poll.options, pollId)
         })
 
@@ -286,6 +283,19 @@ export class VotingModule extends Module<NullModule, Context, Config> {
         results += options.join(poll.anonymous ? "\n" : "\n\n")
         results += "\n============="
         return results
+    }
+
+    private addStopMessageUpdate(chatId: string, messageId: number) {
+        const pendingUpdate = this.getEditMessageUpdate(chatId, messageId)
+        if (pendingUpdate) {
+            pendingUpdate.keyboard = Markup.inlineKeyboard([])
+            this.addEditMessageUpdate(pendingUpdate)
+        } else {
+            this.addEditMessageUpdate({
+                chatId, messageId: messageId,
+                keyboard: Markup.inlineKeyboard([])
+            })
+        }
     }
 
     private addEditMessageUpdate(upd: EditMessageUpdate) {
