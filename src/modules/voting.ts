@@ -1,5 +1,5 @@
 import { Module, ModuleContext, NullModule } from "../module"
-import { Telegraf, Markup, TelegramError } from "telegraf"
+import { Telegraf, Markup } from "telegraf"
 import { CallbackQuery } from "typegram"
 import { TelegrafContext, MatchedContext } from "../types"
 import { getUserNameString } from "../utils/string"
@@ -127,51 +127,44 @@ export class VotingModule extends Module<NullModule, Context, Config> {
             name: getUserNameString(from)
         }
 
-        const votes = await this.context.storage.putVoteValue(
+        const {changed, votes} = await this.context.storage.putVoteValue(
             chatId, this.name, String(pollId),
             voter, voteIndex, poll.poll.options.length
         )
 
-        await ctx.answerCbQuery("Ваш голос враховано!")
+        if (changed) {
+            await ctx.answerCbQuery("Ваш голос враховано!")
 
-        let results = poll.poll.message 
-        results += "\n\n=============\n"
-        results += "Результати:"
-        results += "\n=============\n"
+            let results = poll.poll.message 
+            results += "\n\n=============\n"
+            results += "Результати:"
+            results += "\n=============\n"
 
-        const options = poll.poll.options.reduce((val, opt, idx) => {
-            const voters = votes[idx]
-            let line = `<b>[${voters.length}]</b> ${opt}`
-            if (!poll.anonymous) {
-                line += "<b>:</b> "
-                line += voters.reduce((acc, vote) => {
-                    const name = vote.username
-                        ? `<i>${vote.name}</i>(@${vote.username})`
-                        : `<i>vote.name</i>`
-                    return acc.concat(name)
-                }, [] as string[]).join(", ")
-            }
-            return val.concat(line)
-        }, [] as string[])
-        
-        results += options.join("\n")
+            const options = poll.poll.options.reduce((val, opt, idx) => {
+                const voters = votes[idx]
+                let line = `<b>[${voters.length}]</b> ${opt}`
+                if (!poll.anonymous) {
+                    line += "<b>:</b> "
+                    line += voters.reduce((acc, vote) => {
+                        const name = vote.username
+                            ? `<i>${vote.name}</i>(@${vote.username})`
+                            : `<i>vote.name</i>`
+                        return acc.concat(name)
+                    }, [] as string[]).join(", ")
+                }
+                return val.concat(line)
+            }, [] as string[])
+            
+            results += options.join("\n")
 
-        results += "\n============="
-
-        try {
+            results += "\n============="
+            
             await ctx.telegram.editMessageText(
                 chatId, pollId, undefined, results,
                 { parse_mode: "HTML", ...this.inlineKeyboard(poll.poll.options) }
             )
-        } catch(error: any) {
-            if (error.hasOwnProperty("response") && error.hasOwnProperty("on")) {
-                const err = error as TelegramError
-                if (err.description.indexOf("message is not modified") < 0) {
-                    throw error
-                }
-            } else {
-                throw error
-            }
+        } else {
+            await ctx.answerCbQuery("Ваш голос не змінився!")
         }
 
         await this.handlers[poll.module+":"+poll.poll.type]!(ctx, chatId, pollId, poll.poll, votes)

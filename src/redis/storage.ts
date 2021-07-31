@@ -79,7 +79,9 @@ export class RedisStorage implements Storage {
         return this.redis.delAsync(newKeys).then()
     }
 
-    putVoteValue<V>(chatId: string, module: string, poll: string, value: V, selected: number, options: number): Promise<V[][]> {
+    putVoteValue<V>(
+        chatId: string, module: string, poll: string, value: V, selected: number, options: number
+    ): Promise<{changed: boolean, votes: V[][]}> {
         const keys = Array.from({ length: options }, (_, id) => {
             return this.valuePrefix(chatId, module, poll + "_opt_" + id)
         })
@@ -90,8 +92,18 @@ export class RedisStorage implements Storage {
         return keys
             .reduce((multi, key) => multi.smembers(key), multi)
             .execAsync()
-            .then(responses => responses.slice(responses.length - options))
-            .then((votes: string[][]) => votes.map(voters => voters.map(v => JSON.parse(v))))
+            .then(responses => {
+                const changed = responses
+                    .slice(0, responses.length - options)
+                    .reduce((chd, val: number) => chd || (val > 0), false)
+                return { changed, votes: responses.slice(responses.length - options) as string[][] }
+            })
+            .then(({changed, votes}) => {
+                return {
+                    changed,
+                    votes: votes.map(voters => voters.map(v => JSON.parse(v)))
+                }
+            })
     }
 
     clearVoteValues(chatId: string, module: string, poll: string, options: number): Promise<void> {
