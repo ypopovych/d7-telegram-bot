@@ -9,6 +9,7 @@ export interface Storage {
     updateValues(chatId: string, module: string, values: Record<string, any>, ttl?: number): Promise<Record<string, any>>
     removeValues(chatId: string, module: string, keys: string[]): Promise<void>
 
+    getVoteValues<V>(chatId: string, module: string, poll: string, options: number): Promise<V[][]>
     putVoteValue<V>(
       chatId: string, module: string, poll: string, value: V, selected: number, options: number
     ): Promise<{changed: boolean, votes: V[][]}>
