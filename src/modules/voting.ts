@@ -85,7 +85,6 @@ export class VotingModule extends Module<NullModule, Context, Config> {
 
         const message = await this.context.bot.telegram.sendMessage(chatId, poll.message, {
             parse_mode: "HTML",
-            disable_notification: true,
             ...this.inlineKeyboard(poll.options, pollId)
         })
 
@@ -239,7 +238,6 @@ export class VotingModule extends Module<NullModule, Context, Config> {
 
         const message = await this.context.bot.telegram.sendMessage(chatId, results, {
             parse_mode: "HTML",
-            disable_notification: true,
             ...this.inlineKeyboard(poll.poll.options, pollId)
         })
 
@@ -271,10 +269,7 @@ export class VotingModule extends Module<NullModule, Context, Config> {
             if (!poll.anonymous) {
                 line += "<b>:</b> "
                 line += voters.reduce((acc, vote) => {
-                    const name = vote.username
-                        ? `<i>${vote.name}</i>(@${vote.username})`
-                        : `<i>${vote.name}</i>`
-                    return acc.concat(name)
+                    return acc.concat(`<i>${vote.name}</i>`)
                 }, [] as string[]).join(", ")
             }
             return val.concat(line)
