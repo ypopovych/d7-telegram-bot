@@ -36,6 +36,11 @@ export async function isChatAdmin(telegram: Telegram, storage: Storage, chatId: 
     return superadmins.findIndex(adm => adm.userId == userId) >= 0
 }
 
+export async function isTelegramChatAdmin(telegram: Telegram, chatId: string, userId: number): Promise<boolean> {
+    const admins = await telegram.getChatAdministrators(chatId)
+    return admins.findIndex(adm => adm.user.id == userId) >= 0
+}
+
 export function isChatMember(telegram: Telegram, chatId: string, userId: number): Promise<boolean> {
     return telegram.getChatMember(chatId, userId)
         .then(() => true)

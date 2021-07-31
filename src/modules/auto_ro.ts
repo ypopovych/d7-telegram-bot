@@ -70,7 +70,7 @@ export class AutoRoModule extends Module<NullModule, Context, Config> {
             if (isMedia) {
                 if (await this.newMediaMessage(ctx, mediaGroupId || '', count)) {
                     await enableRo(
-                        ctx.telegram, this.storage, String(ctx.chat.id),
+                        ctx.telegram, String(ctx.chat.id),
                         ctx.message.from.id, 86400,
                         ctx.message.message_id, ctx.message.from.first_name,
                         `за ${count} або більше медіа підряд`

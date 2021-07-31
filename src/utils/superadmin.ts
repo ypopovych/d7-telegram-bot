@@ -1,4 +1,3 @@
-import { ChatMember } from "typegram"
 import { Telegram } from "telegraf"
 import { Storage } from "../types"
 
@@ -7,15 +6,11 @@ const SUPER_ADMINS_KEY="superadmins"
 
 export type SuperAdminData = { userId: number; userName?: string }
 
-export function isSuperAdmin(user: ChatMember) {
-    return user.status === "creator"
-}
-
 export async function getSuperAdmins(telegram: Telegram, storage: Storage, chatId: string): Promise<Array<SuperAdminData>> {
     const saved = await storage.getConfigValue(chatId, MODULE, SUPER_ADMINS_KEY)
     if (saved && saved.length > 0) return saved
     const admins = await telegram.getChatAdministrators(chatId)  
-    const superadmin = admins.find(adm => isSuperAdmin(adm))
+    const superadmin = admins.find(adm => adm.status === "creator")
     if (!superadmin) throw new Error("Superadmin not found in chat: " + chatId)
     const superadmins: SuperAdminData[] = [{ userId: superadmin.user.id, userName: superadmin.user.username }]
     await setSuperAdmins(storage, chatId, superadmins)

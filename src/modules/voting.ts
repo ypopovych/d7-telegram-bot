@@ -8,7 +8,9 @@ export interface Context extends ModuleContext {
     bot: Telegraf<TelegrafContext>
 }
 
-export type Config = {}
+export type Config = {
+    repostCooldown: number
+}
 
 export interface Poll {
     type: string
@@ -45,7 +47,7 @@ type PollCallback<P> = (
 export class VotingModule extends Module<NullModule, Context, Config> {
     readonly name = "voting"
     static readonly moduleName = "voting"
-    static readonly defaultConfig: Config = {}
+    static readonly defaultConfig: Config = { repostCooldown: 60 }
 
     private handlers: Record<string, PollCallback<Poll>> = {}
     private updates: Record<string, EditMessageUpdate> = {}
@@ -53,6 +55,7 @@ export class VotingModule extends Module<NullModule, Context, Config> {
 
     readonly VOTE_REGEX = new RegExp(/^poll_vote_(?<id>[0-9]+)_(?<option>[0-9+])$/)
     readonly REPOST_REGEX = new RegExp(/^poll_repost_(?<id>[0-9]+)$/)
+    readonly LAST_REPOST_DATE_KEY = "last_repost_date"
 
     init() {
         this.context.bot.on('callback_query', this.event_onCallbackQuery.bind(this))
@@ -226,6 +229,13 @@ export class VotingModule extends Module<NullModule, Context, Config> {
             return
         }
 
+        if (!await this.ensureRepostCooldown(chatId)) {
+            await ctx.answerCbQuery('Помилка! Не можна перепостити настільки часто')
+            return
+        }
+
+        await this.updateRepostCooldown(chatId)
+
         const votes = await this.context.storage.getVoteValues<Voter>(
             chatId, this.name, String(pollId), poll.poll.options.length
         )
@@ -331,6 +341,21 @@ export class VotingModule extends Module<NullModule, Context, Config> {
         } else {
             this.timer = undefined
         }
+    }
+
+    private async ensureRepostCooldown(chatId: string): Promise<boolean> {
+        const cooldown = this.config.repostCooldown
+        const lastMessage = await this.storage
+            .getValues(chatId, this.name, [this.LAST_REPOST_DATE_KEY])
+            .then((vals) => vals[0] ?? 0)
+        return (Date.now() - lastMessage) >= (cooldown * 1000)
+    }
+
+    private updateRepostCooldown(chatId: string): Promise<void> {
+        return this.storage.setValues(
+            chatId, this.name,
+            { [this.LAST_REPOST_DATE_KEY]: Date.now() }
+        )
     }
 
     private getPoll(chatId: string, pollId: number): Promise<PollData | undefined> {

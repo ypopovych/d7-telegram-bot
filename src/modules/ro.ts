@@ -24,7 +24,7 @@ export class RoModule extends Module<NullModule, Context, Config> {
         if (!await ensureMessageCitation(ctx)) return
     
         await enableRo(
-            ctx.telegram, this.storage, String(ctx.chat.id),
+            ctx.telegram, String(ctx.chat.id),
             ctx.message.reply_to_message!.from!.id, 86400,
             ctx.message.message_id, ctx.message.reply_to_message!.from!.first_name, ''
         )
@@ -36,7 +36,7 @@ export class RoModule extends Module<NullModule, Context, Config> {
         if (!await ensureMessageCitation(ctx)) return
     
         await enableRo(
-            ctx.telegram, this.storage, String(ctx.chat.id),
+            ctx.telegram, String(ctx.chat.id),
             ctx.message.reply_to_message!.from!.id, 86400 * 7,
             ctx.message.message_id, ctx.message.reply_to_message!.from!.first_name, ''
         )

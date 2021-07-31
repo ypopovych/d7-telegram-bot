@@ -1,20 +1,20 @@
 import { Telegram } from "telegraf"
 import { ChatMemberRestricted } from "typegram"
 import { Storage } from "../types"
-import { isChatAdmin } from './validators'
+import { isTelegramChatAdmin } from './validators'
 import { getHoursString } from './string'
 import { restoreTitle } from './title'
 
 
 export async function enableRo(
-    telegram: Telegram, storage: Storage, chatId: string,
+    telegram: Telegram, chatId: string,
     userId: number, period: number, messageId: number,
     userName: string, reason: string
 ): Promise<void> {
-    if (await isChatAdmin(telegram, storage, chatId, userId)) {
+    if (await isTelegramChatAdmin(telegram, chatId, userId)) {
         return await telegram.sendMessage(
             chatId,
-            `Користувач ${userName} суперадмін, я не буду його РОшити`,
+            `Користувач ${userName} адмін, я не буду його РОшити`,
             { reply_to_message_id: messageId }
         ).then()
     }

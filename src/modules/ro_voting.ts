@@ -100,7 +100,7 @@ export class RoVotingModule extends Module<VotingModule, Context, Config> {
         if (voters[0].length >= poll.votesCount) { // RO
             await this.voting.stopPoll(chatId, pollId)
             await enableRo(
-                ctx.telegram, this.storage, chatId, poll.userId,
+                ctx.telegram, chatId, poll.userId,
                 poll.period, poll.messageId, poll.userName, ''
             ) 
         } else if (voters[1].length >= poll.votesCount) { // No RO
