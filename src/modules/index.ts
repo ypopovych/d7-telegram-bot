@@ -1,4 +1,5 @@
 import { ModuleBootstrapper } from "../module"
+import { VotingModule } from "./voting"
 import { AdminModule } from "./admin"
 import { AutoRoModule } from "./auto_ro"
 import { BanModule } from "./ban"
@@ -11,6 +12,7 @@ import { HelpModule } from "./help"
 
 export const MODULES = ModuleBootstrapper
     .empty()
+    .module(VotingModule)
     .module(AdminModule)
     .module(AutoRoModule)
     .module(BanModule)

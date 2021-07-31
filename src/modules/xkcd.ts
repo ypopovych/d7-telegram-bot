@@ -4,7 +4,6 @@ import { Module, ModuleContext, NullModule } from "../module"
 import { XKCD, XKCDItem } from "../utils/xkcd"
 import { isBotCommand, ensureChatAdmin } from "../utils/validators"
 import { getSecondsString } from '../utils/string'
-import { Resolver} from "../bootstrapper"
 
 export type Config = {
     xkcd: MethodConfig
@@ -14,20 +13,16 @@ export type Config = {
 
 export interface Context extends ModuleContext {
     bot: Telegraf<TelegrafContext>
+    xkcd: XKCD
 }
 
 export class XkcdModule extends Module<NullModule, Context, Config> {
     readonly name = "xkcd"
     static readonly moduleName = "xkcd"
-    private xkcd: XKCD
+    private xkcd!: XKCD
 
     readonly COOLDOWN_KEY = "cooldown_seconds"
     readonly LAST_MESSAGE_DATE_KEY = "last_message_date"
-
-    constructor(resolver: Resolver<NullModule>, context: Context) {
-        super(resolver, context)
-        this.xkcd = new XKCD()
-    }
 
     private async command_xkcd(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.xkcd)) return
@@ -100,6 +95,7 @@ export class XkcdModule extends Module<NullModule, Context, Config> {
     }
 
     init(): void {
+        this.xkcd = this.context.xkcd
         this.context.bot.command("xkcd", this.command_xkcd.bind(this))
         this.context.bot.command("xkcd_cooldown", this.command_getCooldown.bind(this))
         this.context.bot.command("xkcd_set_cooldown", this.command_setCooldown.bind(this))

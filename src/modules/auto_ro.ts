@@ -94,9 +94,7 @@ export class AutoRoModule extends Module<NullModule, Context, Config> {
         this.context.bot.on('message', this.event_onMessage.bind(this))
     }
 
-    deinit(): void {
-        
-    }
+    deinit(): void {}
 
     title(): string { return 'АвтоРО' }
     commands(): Record<string, string> {

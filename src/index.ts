@@ -7,6 +7,7 @@ import * as redis from './redis/async'
 import { RedisStorage } from "./redis/storage"
 import { AsyncTaskRunner, delay } from './utils/delay'
 import { Configuration } from "./config"
+import { XKCD } from "./utils/xkcd"
 
 // Reading config file
 const config = new Configuration(path.join(__dirname, "..", "config.json"))
@@ -20,15 +21,21 @@ const taskRunner = new AsyncTaskRunner()
 // Storage instance
 const storage = new RedisStorage(redis.createClient(config.redis.url), config.redis.options)
 
+// Reading Jokes
+const jokes = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "jokes.json"), {encoding: 'utf8'}))
+
+// Creating XKCD provider
+const xkcd = new XKCD()
+
 // Bootstraping and starting modules
-const moduleResolver = modules.MODULES.bootstrap({bot, storage, taskRunner, config})
+const moduleResolver = modules.MODULES.bootstrap({bot, storage, taskRunner, config, jokes, xkcd})
 moduleResolver.init()
 
 // WebHook setup
 let options: Telegraf.LaunchOptions = {
     allowedUpdates: [
-        "message", "poll", "chat_member", "my_chat_member",
-        "poll_answer", "edited_message"
+        "message", "chat_member", "my_chat_member",
+        "callback_query", "edited_message"
     ]
 }
 

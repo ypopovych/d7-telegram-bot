@@ -1,11 +1,8 @@
 import { Telegraf } from "telegraf"
-import * as fs from "fs"
-import * as path from "path"
 import { TelegrafContext, MatchedContext, MethodConfig } from "../types"
 import { Module, ModuleContext, NullModule } from "../module"
 import { isBotCommand, ensureChatAdmin } from "../utils/validators"
 import { getRandomIntInclusive } from "../utils/random"
-import { Resolver } from "../bootstrapper"
 
 type Joke = { month: number; month_text: string, year: number; release: string, joke: string }
 
@@ -17,20 +14,16 @@ export type Config = {
 
 export interface Context extends ModuleContext {
     bot: Telegraf<TelegrafContext>
+    jokes: Joke[]
 }
 
 export class JokeModule extends Module<NullModule, Context, Config> {
     readonly name = "joke"
     static readonly moduleName = "joke"
-    private jokes: Joke[] 
+    private jokes!: Joke[] 
 
     readonly COOLDOWN_KEY = "cooldown_seconds"
     readonly LAST_MESSAGE_DATE_KEY = "last_message_date"
-
-    constructor(resolver: Resolver<NullModule>, context: Context) {
-        super(resolver, context)
-        this.jokes = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "..", "jokes.json"), {encoding: 'utf8'}))
-    }
 
     private async command_tellJoke(ctx: MatchedContext<TelegrafContext, 'text'>): Promise<void> {
         if (!isBotCommand(ctx, this.config.tell_joke)) return
@@ -86,6 +79,7 @@ export class JokeModule extends Module<NullModule, Context, Config> {
     }
 
     init(): void {
+        this.jokes = this.context.jokes
         this.context.bot.command("tell_joke", this.command_tellJoke.bind(this))
         this.context.bot.command("tell_joke_cooldown", this.command_getCooldown.bind(this))
         this.context.bot.command("tell_joke_set_cooldown", this.command_setCooldown.bind(this))

@@ -1,3 +1,5 @@
+import { User } from 'typegram'
+
 export function getHoursString(seconds: number): string {
     const hours = seconds / 3600
     if (hours % 10 == 1 && (hours % 100 < 10 || hours % 100 > 20)) {
@@ -28,4 +30,8 @@ export function getSecondsString(seconds: number): string {
         return `${seconds} секунди`
     }
     return `${seconds} секунд`
+}
+
+export function getUserNameString(user: User): string {
+    return user.last_name ? `${user.first_name} ${user.last_name}` : user.first_name
 }

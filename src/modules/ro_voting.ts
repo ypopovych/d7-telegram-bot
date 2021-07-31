@@ -1,20 +1,19 @@
-import { Telegraf, Telegram } from "telegraf"
+import { Telegraf } from "telegraf"
 import { TelegrafContext, MatchedContext, MethodConfig } from "../types"
-import { Module, ModuleContext, NullModule } from "../module"
+import { Module, ModuleContext } from "../module"
 import { ensureChatAdmin, ensureMessageCitation, isBotCommand } from "../utils/validators"
-import { getHoursString } from "../utils/string"
+import { getHoursString, getUserNameString } from "../utils/string"
 import { enableRo } from "../utils/ro"
+import { VotingModule, Poll as BasePoll, Voter } from './voting'
 
-type PollData = {
+interface RoPoll extends BasePoll {
+    type: 'ro_poll'
     userName: string
     userId: number
-    chatId: number
-    id: string
     messageId: number
     votesCount: number
     period: number
-    endDate: number
-}
+} 
 
 export type Config = {
     number_of_votes: MethodConfig
@@ -26,9 +25,11 @@ export interface Context extends ModuleContext {
     bot: Telegraf<TelegrafContext>
 }
 
-export class RoVotingModule extends Module<NullModule, Context, Config> {
+export class RoVotingModule extends Module<VotingModule, Context, Config> {
     readonly name = "ro_voting"
     static readonly moduleName = "ro_voting"
+
+    private voting!: VotingModule
 
     readonly POLLS_COMMON_CHATID_KEY = "common_polls"
     readonly NUMBER_OF_VOTES_KEY = "number_of_votes"
@@ -72,51 +73,42 @@ export class RoVotingModule extends Module<NullModule, Context, Config> {
         if (!isBotCommand(ctx, this.config.ro_24h_poll)) return
         if (!await ensureMessageCitation(ctx)) return
         const numberOfVotes = await this.getNumberOfVotes(ctx)
-        const name = ctx.message.reply_to_message!.from!.first_name
+        const name = getUserNameString(ctx.message.reply_to_message!.from!)
         const hours = getHoursString(86400)
         const options = [`Дати РО на ${hours}`, 'Панять і прастіть']
-        const poll = await ctx.replyWithPoll(
-            `Тут пропонують дати РО для ${name} на ${hours}. Потрібно ${numberOfVotes} голосів. Го кнопкодавить!`,
+
+        const poll: RoPoll = {
+            type: 'ro_poll',
+            message: `Тут пропонують дати РО для ${name} на ${hours}. Потрібно ${numberOfVotes} голосів. Го кнопкодавить!`,
             options,
-            { is_anonymous: false}
-        )
-        const pollData: PollData = {
             userName: name,
             userId: ctx.message.reply_to_message!.from!.id,
-            endDate: Date.now() + (this.config.ro_24h_poll.pollTime * 1000),
+            messageId: ctx.message.message_id,
             period: 86400,
-            chatId: poll.chat.id,
-            id: poll.poll.id,
-            messageId: poll.message_id,
             votesCount: numberOfVotes
         }
-        await this.addPoll(poll.poll.id, pollData)
+
+        await this.voting.startPoll(
+            this.name, poll, String(ctx.chat.id), false, this.config.ro_24h_poll.pollTime
+        )
     }
 
-    private async event_onPoll(ctx: MatchedContext<TelegrafContext, 'poll'>, next: () => Promise<void>): Promise<void> {
-        const pollData = await this.getPoll(ctx.poll.id)
-        if (!pollData) return await next()
-        if (ctx.poll.is_closed) {
-            return await this.removePoll(ctx.poll.id)
-        }
-        if (pollData.endDate <= Date.now()) {
-            await this.stopPoll(ctx.telegram, pollData.chatId, pollData.messageId)
-            return await this.removePoll(ctx.poll.id)
-        }
-        if (ctx.poll.options[0].voter_count >= pollData.votesCount) {
-            await this.stopPoll(ctx.telegram, pollData.chatId, pollData.messageId)
-            await this.removePoll(ctx.poll.id)
+    private async handler_onVotingPoll(
+        ctx: MatchedContext<TelegrafContext, 'callback_query'>,
+        chatId: string, pollId: number, poll: RoPoll, voters: Voter[][]
+    ) {
+        if (voters[0].length >= poll.votesCount) { // RO
+            await this.voting.stopPoll(chatId, pollId)
             await enableRo(
-                ctx.telegram, this.storage, String(pollData.chatId), pollData.userId,
-                pollData.period, pollData.messageId, pollData.userName, ''
-            )
-        } else if (ctx.poll.options[1].voter_count >= pollData.votesCount) {
-            await this.stopPoll(ctx.telegram, pollData.chatId, pollData.messageId)
-            await this.removePoll(ctx.poll.id)
+                ctx.telegram, this.storage, chatId, poll.userId,
+                poll.period, poll.messageId, poll.userName, ''
+            ) 
+        } else if (voters[1].length >= poll.votesCount) { // No RO
+            await this.voting.stopPoll(chatId, pollId)
             await ctx.telegram.sendMessage(
-                pollData.chatId,
-                `Користувач ${pollData.userName} може й далі писати`,
-                { reply_to_message_id: pollData.messageId }
+                chatId,
+                `Користувач ${poll.userName} може й далі писати`,
+                { reply_to_message_id: poll.messageId }
             )
         }
     }
@@ -128,13 +120,16 @@ export class RoVotingModule extends Module<NullModule, Context, Config> {
     }
 
     init(): void {
+        this.voting = this.resolver.get(VotingModule)
+        this.voting.register(this.name, "ro_poll", this.handler_onVotingPoll.bind(this))
         this.context.bot.command("number_of_votes", this.command_getNumberOfVotes.bind(this))
         this.context.bot.command("set_number_of_votes", this.command_setNumberOfVotes.bind(this))
         this.context.bot.command("ro_24h_poll", this.command_startRo24hPoll.bind(this))
-        this.context.bot.on('poll', this.event_onPoll.bind(this))
     }
 
-    deinit(): void {}
+    deinit(): void {
+        this.voting.deregister(this.name, "ro_poll")
+    }
 
     title(): string { return 'Демократія' }
     commands(): Record<string, string> {
@@ -152,22 +147,5 @@ export class RoVotingModule extends Module<NullModule, Context, Config> {
     
     private setNumberOfVotes(ctx: MatchedContext<TelegrafContext, 'message'>, number: number): Promise<void> {
         return this.setConfigValue(ctx.chat.id, this.NUMBER_OF_VOTES_KEY, number)
-    }
-
-    private addPoll(pollId: string, data: PollData): Promise<void> {
-        return this.storage.setValues(this.POLLS_COMMON_CHATID_KEY, this.name, { [pollId]: data })
-    }
-    
-    private getPoll(pollId: string): Promise<PollData | undefined> {
-        return this.storage.getValues(this.POLLS_COMMON_CHATID_KEY, this.name, [pollId])
-            .then(vals => vals[0])
-    }
-    
-    private removePoll(pollId: string): Promise<void> {
-        return this.storage.removeValues(this.POLLS_COMMON_CHATID_KEY, this.name, [pollId])
-    }
-    
-    private stopPoll(telegram: Telegram, chatId: number, messageId: number): Promise<void> {
-        return telegram.stopPoll(chatId, messageId).then()
     }
 }
