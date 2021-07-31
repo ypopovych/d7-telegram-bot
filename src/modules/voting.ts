@@ -1,8 +1,9 @@
 import { Module, ModuleContext, NullModule } from "../module"
-import { Telegraf, Markup } from "telegraf"
+import { Telegraf, Markup, TelegramError } from "telegraf"
 import { CallbackQuery } from "typegram"
 import { TelegrafContext, MatchedContext } from "../types"
 import { getUserNameString } from "../utils/string"
+import { isChatMember } from "../utils/validators"
 
 export interface Context extends ModuleContext {
     bot: Telegraf<TelegrafContext>
@@ -111,10 +112,14 @@ export class VotingModule extends Module<NullModule, Context, Config> {
 
         if (!this.handlers[poll.module+":"+poll.poll.type]) return await ctx.answerCbQuery()
 
+        const from = query.from
+
         const voteIndex = parseInt(query.data.replace("poll_vote_", ""), 10)
         if (voteIndex === NaN || voteIndex >= poll.poll.options.length) return await ctx.answerCbQuery()
 
-        const from = query.from
+        if (!await isChatMember(ctx.telegram, chatId, from.id)) {
+            return await ctx.answerCbQuery("Помилка! Ви не є учасником чату з голосуванням.")
+        }
 
         const voter: Voter = {
             id: from.id,
@@ -153,10 +158,21 @@ export class VotingModule extends Module<NullModule, Context, Config> {
 
         results += "\n============="
 
-        await ctx.telegram.editMessageText(
-            chatId, pollId, undefined, results,
-            { parse_mode: "HTML", ...this.inlineKeyboard(poll.poll.options) }
-        )
+        try {
+            await ctx.telegram.editMessageText(
+                chatId, pollId, undefined, results,
+                { parse_mode: "HTML", ...this.inlineKeyboard(poll.poll.options) }
+            )
+        } catch(error: any) {
+            if (error.hasOwnProperty("response") && error.hasOwnProperty("on")) {
+                const err = error as TelegramError
+                if (err.description.indexOf("message is not modified") < 0) {
+                    throw error
+                }
+            } else {
+                throw error
+            }
+        }
 
         await this.handlers[poll.module+":"+poll.poll.type]!(ctx, chatId, pollId, poll.poll, votes)
     }

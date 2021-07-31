@@ -36,6 +36,12 @@ export async function isChatAdmin(telegram: Telegram, storage: Storage, chatId: 
     return superadmins.findIndex(adm => adm.userId == userId) >= 0
 }
 
+export function isChatMember(telegram: Telegram, chatId: string, userId: number): Promise<boolean> {
+    return telegram.getChatMember(chatId, userId)
+        .then(() => true)
+        .catch(() => false)
+}
+
 export async function ensureGroupChat(ctx: MatchedContext<Context, 'message'>): Promise<boolean> {
     if (!isGroupChat(ctx.chat)) {
         await ctx.reply(
