@@ -1,5 +1,5 @@
 import { Telegraf } from "telegraf"
-import { TelegrafContext, MatchedContext, MethodConfig } from "../types"
+import { TelegrafContext, MatchedContext, MethodConfig, VoteValues } from "../types"
 import { Module, ModuleContext } from "../module"
 import { ensureChatAdmin, ensureMessageCitation, isBotCommand } from "../utils/validators"
 import { getHoursString, getUserNameString } from "../utils/string"
@@ -95,15 +95,15 @@ export class RoVotingModule extends Module<VotingModule, Context, Config> {
 
     private async handler_onVotingPoll(
         ctx: MatchedContext<TelegrafContext, 'callback_query'>,
-        chatId: string, pollId: number, poll: RoPoll, voters: Voter[][]
+        chatId: string, pollId: number, poll: RoPoll, voters: VoteValues<Voter>
     ) {
-        if (voters[0].length >= poll.votesCount) { // RO
+        if (voters.votes[0].length >= poll.votesCount) { // RO
             await this.voting.stopPoll(chatId, pollId)
             await enableRo(
                 ctx.telegram, chatId, poll.userId,
                 poll.period, poll.messageId, poll.userName, ''
             ) 
-        } else if (voters[1].length >= poll.votesCount) { // No RO
+        } else if (voters.votes[1].length >= poll.votesCount) { // No RO
             await this.voting.stopPoll(chatId, pollId)
             await ctx.telegram.sendMessage(
                 chatId,

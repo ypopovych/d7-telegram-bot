@@ -1,5 +1,5 @@
 import { RedisClient } from './async'
-import { Storage } from '../types'
+import { Storage, VoteValues } from '../types'
 
 const STORAGE_PREFIX = "storage"
 const CONFIG_KEY = "config"
@@ -79,45 +79,56 @@ export class RedisStorage implements Storage {
         return this.redis.delAsync(newKeys).then()
     }
 
-    getVoteValues<V>(chatId: string, module: string, poll: string, options: number): Promise<V[][]> {
+    getVoteValues<V>(chatId: string, module: string, poll: string, options: number): Promise<VoteValues<V>> {
         const keys = Array.from({ length: options }, (_, id) => {
             return this.valuePrefix(chatId, module, poll + "_opt_" + id)
         })
         return keys
             .reduce((multi, key) => multi.smembers(key), this.redis.multi())
+            .hgetall(this.valuePrefix(chatId, module, poll + "_values"))
             .execAsync()
-            .then((votes: any[][]) => votes.map(voters => voters.map(v => JSON.parse(v))))
+            .then(votes => {
+                const rawValues = (votes.pop() as Record<string, any>)
+                const values = Object.keys(rawValues).reduce((obj, key) => (
+                    {...obj, [key]: JSON.parse(rawValues[key])}
+                ), {})
+                return { votes: votes as string[][], values };
+            })
     }
 
     putVoteValue<V>(
-        chatId: string, module: string, poll: string, value: V, selected: number, options: number
-    ): Promise<{changed: boolean, votes: V[][]}> {
+        chatId: string, module: string, poll: string, userId: string, value: V, selected: number, options: number
+    ): Promise<{changed: boolean} & VoteValues<V>> {
         const keys = Array.from({ length: options }, (_, id) => {
             return this.valuePrefix(chatId, module, poll + "_opt_" + id)
         })
-        const val = JSON.stringify(value)
-        const multi = keys.reduce((multi, key, idx) => {
-            return idx === selected ? multi.sadd(key, val) : multi.srem(key, val)
-        }, this.redis.multi())
+        const multi = keys
+            .reduce((multi, key, idx) => {
+                return idx === selected ? multi.sadd(key, userId) : multi.srem(key, userId)
+            }, this.redis.multi())
+            .hset(this.valuePrefix(chatId, module, poll + "_values"), userId, JSON.stringify(value))
         return keys
             .reduce((multi, key) => multi.smembers(key), multi)
+            .hgetall(this.valuePrefix(chatId, module, poll + "_values"))
             .execAsync()
             .then(responses => {
                 const changed = responses
-                    .slice(0, responses.length - options)
+                    .slice(0, options)
                     .reduce((chd, val: number) => chd || (val > 0), false)
-                return { changed, votes: responses.slice(responses.length - options) as string[][] }
+                return { changed, votes: responses.slice(options + 1) }
             })
             .then(({changed, votes}) => {
-                return {
-                    changed,
-                    votes: votes.map(voters => voters.map(v => JSON.parse(v)))
-                }
+                const rawValues = (votes.pop() as Record<string, any>)
+                const values = Object.keys(rawValues).reduce((obj, key) => (
+                    {...obj, [key]: JSON.parse(rawValues[key])}
+                ), {})
+                return { changed, votes: votes as string[][], values };
             })
     }
 
     clearVoteValues(chatId: string, module: string, poll: string, options: number): Promise<void> {
         const keys = Array.from({ length: options }, (_, id) => poll + "_opt_" + id)
+        keys.push(poll + "_values")
         return this.removeValues(chatId, module, keys)
     }
 

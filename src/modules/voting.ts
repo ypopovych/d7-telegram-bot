@@ -1,7 +1,7 @@
 import { Module, ModuleContext, NullModule } from "../module"
 import { Telegraf, Markup, TelegramError } from "telegraf"
 import { CallbackQuery, InlineKeyboardMarkup } from "typegram"
-import { TelegrafContext, MatchedContext } from "../types"
+import { TelegrafContext, MatchedContext, VoteValues } from "../types"
 import { getUserNameString } from "../utils/string"
 
 export interface Context extends ModuleContext {
@@ -41,7 +41,7 @@ type EditMessageUpdate = {
 
 type PollCallback<P> = (
     ctx: MatchedContext<TelegrafContext, 'callback_query'>,
-    chatId: string, pollId: number, poll: P, voters: Voter[][]
+    chatId: string, pollId: number, poll: P, voters: VoteValues<Voter>
 ) => Promise<void>
 
 export class VotingModule extends Module<NullModule, Context, Config> {
@@ -179,12 +179,12 @@ export class VotingModule extends Module<NullModule, Context, Config> {
             name: getUserNameString(from)
         }
 
-        const {changed, votes} = await this.context.storage.putVoteValue(
-            chatId, this.name, String(pollId),
+        const votes = await this.context.storage.putVoteValue(
+            chatId, this.name, String(pollId), String(from.id),
             voter, selected, poll.poll.options.length
         )
 
-        if (changed) {
+        if (votes.changed) {
             await ctx.answerCbQuery("Ваш голос враховано!")
             
             const results = this.getResultsMessage(poll, votes)
@@ -257,19 +257,19 @@ export class VotingModule extends Module<NullModule, Context, Config> {
     title(): string { return "" }
     commands(): Record<string, string> { return {} }
 
-    private getResultsMessage(poll: PollData, votes: Voter[][]) {
+    private getResultsMessage(poll: PollData, votes: VoteValues<Voter>) {
         let results = poll.poll.message 
         results += "\n\n=============\n"
         results += "Результати:"
         results += "\n=============\n"
 
         const options = poll.poll.options.reduce((val, opt, idx) => {
-            const voters = votes[idx]
+            const voters = votes.votes[idx]
             let line = `<b>[${voters.length}]</b> ${opt}`
             if (!poll.anonymous) {
                 line += "<b>:</b> "
-                line += voters.reduce((acc, vote) => {
-                    return acc.concat(`<i>${vote.name}</i>`)
+                line += voters.reduce((acc, voter) => {
+                    return acc.concat(`<i>${votes.values[voter].name}</i>`)
                 }, [] as string[]).join(", ")
             }
             return val.concat(line)
