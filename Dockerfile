@@ -12,7 +12,7 @@ RUN cd /app && npm install --production
 
 WORKDIR /app
 
-ENTRYPOINT [ "/usr/local/bin/node", "dist/index.js" ]
+ENTRYPOINT [ "/usr/local/bin/node", "--unhandled-rejections=strict", "dist/index.js" ]
 
 EXPOSE 8000 8443
 
