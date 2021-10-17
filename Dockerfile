@@ -10,7 +10,9 @@ ADD package.json jokes.json /app/
 
 RUN cd /app && npm install --production
 
-ENTRYPOINT [ "/usr/local/bin/node", "/app/dist/index.js" ]
+WORKDIR /app
+
+ENTRYPOINT [ "/usr/local/bin/node", "dist/index.js" ]
 
 EXPOSE 8000 8443
 
