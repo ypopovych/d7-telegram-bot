@@ -1,4 +1,4 @@
-FROM node:lts-slim
+FROM node:lts-alpine
 
 LABEL maintainer "Yehor Popovych <popovych.yegor@gmail.com>"
 
