@@ -14,7 +14,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y nodejs
       -
         name: Build
-        run: npm install && npm run build
+        run: npm install && npm run build && ls -la
       -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v1
