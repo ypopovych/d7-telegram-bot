@@ -9,8 +9,11 @@ import { AsyncTaskRunner, delay } from './utils/delay'
 import { Configuration } from "./config"
 import { XKCD } from "./utils/xkcd"
 
+// Path to config file
+const configPath = process.env.CONFIG_FILE ?? path.join(__dirname, "..", "config.json")
+
 // Reading config file
-const config = new Configuration(path.join(__dirname, "..", "config.json"))
+const config = new Configuration(configPath)
 
 // Creating bot instance
 const bot = new Telegraf<TelegrafContext>(config.botToken)
