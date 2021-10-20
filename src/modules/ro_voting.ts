@@ -4,6 +4,7 @@ import { Module, ModuleContext } from "../module"
 import { ensureChatAdmin, ensureMessageCitation, isBotCommand } from "../utils/validators"
 import { getHoursString, getUserNameString } from "../utils/string"
 import { enableRo } from "../utils/ro"
+import { fixChatId } from "../utils/chatid"
 import { VotingModule, Poll as BasePoll, Voter } from './voting'
 
 interface RoPoll extends BasePoll {
@@ -76,10 +77,14 @@ export class RoVotingModule extends Module<VotingModule, Context, Config> {
         const name = getUserNameString(ctx.message.reply_to_message!.from!)
         const hours = getHoursString(86400)
         const options = [`Дати РО на ${hours}`, 'Панять і прастіть']
+        const messageUrl = `https://t.me/c/${fixChatId(ctx.message.chat.id)}/${ctx.message.message_id}`
+
+        const message = `Тут пропонують дати РО для ${name} на ${hours} за <a href="${messageUrl}">оцей пост</a>. `+
+            `Потрібно ${numberOfVotes} голосів. Го кнопкодавить!`
 
         const poll: RoPoll = {
             type: 'ro_poll',
-            message: `Тут пропонують дати РО для ${name} на ${hours}. Потрібно ${numberOfVotes} голосів. Го кнопкодавить!`,
+            message,
             options,
             userName: name,
             userId: ctx.message.reply_to_message!.from!.id,
