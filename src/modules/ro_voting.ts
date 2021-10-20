@@ -77,7 +77,7 @@ export class RoVotingModule extends Module<VotingModule, Context, Config> {
         const name = getUserNameString(ctx.message.reply_to_message!.from!)
         const hours = getHoursString(86400)
         const options = [`Дати РО на ${hours}`, 'Панять і прастіть']
-        const messageUrl = `https://t.me/c/${fixChatId(ctx.message.chat.id)}/${ctx.message.message_id}`
+        const messageUrl = `https://t.me/c/${fixChatId(ctx.message.chat.id)}/${ctx.message.reply_to_message!.message_id}`
 
         const message = `Тут пропонують дати РО для ${name} на ${hours} за <a href="${messageUrl}">оцей пост</a>. `+
             `Потрібно ${numberOfVotes} голосів. Го кнопкодавить!`
